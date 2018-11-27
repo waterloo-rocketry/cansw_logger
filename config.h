@@ -22,10 +22,10 @@
 #pragma config FWDTEN = OFF             // Watchdog Timer Enable bit (Watchdog timer enabled/disabled by user software)
 
 // FOSC
-#pragma config POSCMD = NONE            // Primary Oscillator Mode Select bits (Primary Oscillator disabled)
-#pragma config OSCIOFNC = ON            // OSC2 Pin Function bit (OSC2 is general purpose digital I/O pin)
-#pragma config IOL1WAY = ON             // Peripheral pin select configuration (Allow only one reconfiguration)
-#pragma config FCKSM = CSDCMD           // Clock Switching Mode bits (Both Clock switching and Fail-safe Clock Monitor are disabled)
+#pragma config POSCMD = HS              // Primary Oscillator Mode Select bits (HS Crystal Oscillator Mode)
+#pragma config OSCIOFNC = OFF           // OSC2 Pin Function bit (OSC2 is clock output)
+#pragma config IOL1WAY = OFF            // Peripheral pin select configuration (Allow multiple reconfigurations)
+#pragma config FCKSM = CSECMD           // Clock Switching Mode bits (Clock switching is enabled,Fail-safe Clock Monitor is disabled)
 
 // FOSCSEL
 #pragma config FNOSC = FRCDIVN          // Oscillator Source Selection (Internal Fast RC (FRC) Oscillator with postscaler)
