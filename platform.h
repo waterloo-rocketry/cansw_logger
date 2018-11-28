@@ -1,6 +1,8 @@
 #ifndef PLATFORM_H
 #define	PLATFORM_H
 
+#define FCY 25000000
+
 #define LED_1_ON()  (TRISBbits.TRISB13 = 0)
 #define LED_1_OFF() (TRISBbits.TRISB13 = 1)
 

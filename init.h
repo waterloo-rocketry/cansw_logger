@@ -7,5 +7,8 @@ void init_pins();
 //Set up proper oscillator registers
 void init_oscillator();
 
+//Set up the SPI module. CAN to come later.
+void init_peripherals();
+
 #endif	/* INIT_H */
 

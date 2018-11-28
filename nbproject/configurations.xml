@@ -7,6 +7,7 @@
       <itemPath>config.h</itemPath>
       <itemPath>platform.h</itemPath>
       <itemPath>init.h</itemPath>
+      <itemPath>sd.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -17,6 +18,7 @@
                    projectFiles="true">
       <itemPath>main.c</itemPath>
       <itemPath>init.c</itemPath>
+      <itemPath>sd.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

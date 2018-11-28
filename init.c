@@ -1,5 +1,7 @@
 #include "init.h"
+#include "sd.h"
 #include <xc.h>
+#include <stdbool.h>
 
 //Set up pin registers
 void init_pins() {
@@ -58,4 +60,11 @@ void init_oscillator() {
 
     //wait until we're running off of the external clock
     while(OSCCONbits.COSC != 0x03) {}
+}
+
+
+void init_peripherals() {
+    init_spi();
+    while(1)
+        init_sd_card2();
 }
