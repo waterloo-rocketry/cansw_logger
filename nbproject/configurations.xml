@@ -8,6 +8,8 @@
       <itemPath>platform.h</itemPath>
       <itemPath>init.h</itemPath>
       <itemPath>sd.h</itemPath>
+      <itemPath>canlib/dspic33epxxxgp50x/dspic33epxxxgp50x_can.h</itemPath>
+      <itemPath>canlib/can.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -19,6 +21,7 @@
       <itemPath>main.c</itemPath>
       <itemPath>init.c</itemPath>
       <itemPath>sd.c</itemPath>
+      <itemPath>canlib/dspic33epxxxgp50x/dspic33epxxxgp50x_can.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

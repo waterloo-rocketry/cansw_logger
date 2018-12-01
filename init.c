@@ -65,6 +65,5 @@ void init_oscillator() {
 
 void init_peripherals() {
     init_spi();
-    while(1)
-        init_sd_card2();
+    init_sd_card2();
 }

@@ -1,9 +1,14 @@
 #include "config.h"
 #include "platform.h"
 #include "init.h"
+#include "canlib/dspic33epxxxgp50x/dspic33epxxxgp50x_can.h"
 
 //required for delay functions
 #include <libpic30.h>
+
+void can_callback_function(const can_msg_t *message) {
+    //do nothing... for now
+}
 
 int main() {
     //initialize the pins first so we can use the LEDs to tell us if init fails
@@ -18,12 +23,18 @@ int main() {
     init_oscillator();
     init_peripherals();
 
+    can_timing_t timing;
+    timing.brp = 0x3f;
+    timing.sjw = 3;
+    timing.btlmode = 1;
+    timing.prseg = 3;
+    timing.sam = 0;
+    timing.seg1ph = 0;
+    timing.seg2ph = 0;
+    init_can(&timing, can_callback_function, false);
+
     //turn on the blue LED to show that initialization has succeeded
     LED_1_OFF();
-    LED_2_ON();
-
-    //wait for 5 seconds, then turn the LED off
-    __delay32(5 * FCY);
     LED_2_OFF();
 
     while(1) {
