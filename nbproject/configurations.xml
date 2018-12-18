@@ -25,6 +25,7 @@
       <itemPath>canlib/dspic33epxxxgp50x/dspic33epxxxgp50x_can.h</itemPath>
       <itemPath>canlib/can.h</itemPath>
       <itemPath>error.h</itemPath>
+      <itemPath>can_syslog.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -48,6 +49,7 @@
       <itemPath>sd.c</itemPath>
       <itemPath>canlib/dspic33epxxxgp50x/dspic33epxxxgp50x_can.c</itemPath>
       <itemPath>error.c</itemPath>
+      <itemPath>can_syslog.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

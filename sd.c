@@ -15,7 +15,7 @@ static void spi2_send(uint8_t data) {
     while(SPI2STATbits.SPITBF) {}
     SPI2BUF = data;
     while(!SPI2STATbits.SPIRBF) {}
-    uint8_t temp = SPI2BUF;
+    uint8_t __attribute__((unused)) temp = SPI2BUF;
 }
 
 static uint8_t spi2_read(void) {
@@ -140,8 +140,11 @@ int media_write(unsigned long sector,
         spi2_send(0);
         spi2_send(0);
 
-        //read the data response
+        //read the data response (0bxxx00101)
         uint8_t data_resp = spi2_read();
+        if((data_resp & 0x1f) != 5) {
+            error(E_SD_FAIL_WRITE_DATA_RESP);
+        }
 
         //wait until the card stops being busy
         while(spi2_read() != 0xFF);
@@ -151,6 +154,16 @@ int media_write(unsigned long sector,
         address += 512;
     }
     return 1;
+}
+
+void sd_card_log_to_file(const char *buffer, uint16_t length) {
+    FL_FILE *file = fl_fopen("/test.txt", "a");
+    if(!file) {
+        error(E_SD_FAIL_OPEN_FILE);
+    }
+    int retval = fl_fwrite(buffer, 1, length, file);
+
+    fl_fclose(file);
 }
 
 uint8_t init_sd_card2() {
@@ -231,26 +244,17 @@ uint8_t init_sd_card2() {
         error(E_SD_FAIL_READ_FILE);
     }
 
-    unsigned char write_data[] = {
-        'h', 'e', 'l', 'l', 'o', ' ',
-        'w', 'o', 'r', 'l', 'd', '!', '\0'
+    char header[] = {
+        '=', '=', 'W', 'A', 'T', 'E', 'R', 'L',
+        'O', 'O', ' ', 'R', 'O', 'C', 'K', 'E',
+        'T', 'R', 'Y', ' ', 'C', 'A', 'N', ' ',
+        'L', 'O', 'G', 'G', 'E', 'R', ' ', 'V',
+        '0', '.', '1', '.', '0', '=', '=', '\n'
     };
 
-    int retval = fl_fwrite(write_data, 1, sizeof(write_data), file);
+    int retval = fl_fwrite(header, 1, sizeof(header), file);
     fl_fclose(file);
 
-    file = fl_fopen("/test.txt", "r");
-    if(!file) {
-        error(E_SD_FAIL_READ_FILE);
-    }
-
-    unsigned char data[512];
-    retval = fl_fread(data, 1, sizeof(data), file);
-    fl_fclose(file);
-
-    fl_shutdown();
-
-    while(1);
     return true;
 }
 

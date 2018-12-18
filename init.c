@@ -1,5 +1,6 @@
 #include "init.h"
 #include "sd.h"
+#include "can_syslog.h"
 #include <xc.h>
 #include <stdbool.h>
 
@@ -12,6 +13,11 @@ void init_pins() {
     //set LEDs as outputs
     TRISBbits.TRISB13 = 1;
     TRISBbits.TRISB14 = 1;
+
+    //CAN stuff
+    TRISBbits.TRISB11 = 0; //set CANTX as output
+    RPINR26bits.C1RXR = 0b0101010; //set CAN input to pin RP42/RB10
+    RPOR4bits.RP43R = 0b1110; //set CAN output to pin RP43/RB11
 }
 
 //Get running off of the external oscillator.
@@ -66,4 +72,5 @@ void init_oscillator() {
 void init_peripherals() {
     init_spi();
     init_sd_card2();
+    init_can_syslog();
 }

@@ -13,6 +13,8 @@ typedef enum {
     E_SD_FAIL_READ_FILE,
     E_SD_FAIL_UNIMPLEMENTED_FUNCTION,
     E_SD_FAIL_WRITE_BLOCK,
+    E_SD_FAIL_OPEN_FILE,
+    E_SD_FAIL_WRITE_DATA_RESP,
 } cansw_logger_error_t;
 
 void error(cansw_logger_error_t error);
