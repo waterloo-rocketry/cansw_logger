@@ -5,10 +5,13 @@
 #include "error.h"
 #include "fat_io_lib/fat_filelib.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 #define cs_high() (LATBbits.LATB9 = 1)
 #define cs_low()  (LATBbits.LATB9 = 0)
 #define FCY 25000000
+
+static char GLOBAL_FILENAME[20];
 
 static void spi2_send(uint8_t data) {
     __delay32(FCY / 1000);
@@ -49,7 +52,11 @@ static uint8_t sd_send_command(uint8_t command,
                                uint32_t argument,
                                uint8_t crc,
                                uint8_t *output) {
-    spi2_send(0xFF);
+    //step 0, if the card is busy, wait (unless CMD0)
+    if(command != GO_IDLE_STATE) {
+        while(spi2_read() != 0xFF) {};
+    }
+
     //step 1, write the command out onto spi
     spi2_send(0x40 | command);
     //step 2, write the 32 bits of argument, MSB first
@@ -59,10 +66,12 @@ static uint8_t sd_send_command(uint8_t command,
     spi2_send((argument >> 0) & 0xFF);
     //step 3, write out the CRC
     spi2_send(crc);
+    //step 3.5, discard the first fill byte because reasons
+    spi2_read();
     //step 4, wait for a R1 response
     uint16_t status = spi2_read();
     int i;
-    for(i = 0; i < 1000; ++i) {
+    for(i = 0; i < 10; ++i) {
         if((status & 0x80) == 0) {
             break;
         }
@@ -157,11 +166,15 @@ int media_write(unsigned long sector,
 }
 
 void sd_card_log_to_file(const char *buffer, uint16_t length) {
-    FL_FILE *file = fl_fopen("/test.txt", "a");
+    FL_FILE *file = fl_fopen(GLOBAL_FILENAME, "a");
     if(!file) {
         error(E_SD_FAIL_OPEN_FILE);
     }
     int retval = fl_fwrite(buffer, 1, length, file);
+
+    if(!retval) {
+        error(E_SD_FAIL_OPEN_FILE);
+    }
 
     fl_fclose(file);
 }
@@ -180,7 +193,6 @@ uint8_t init_sd_card2() {
     cs_high();
 
     if (status != 0x01) {
-        while(1);
         error(E_SD_FAIL_GO_IDLE);
         return false;
     }
@@ -202,23 +214,23 @@ uint8_t init_sd_card2() {
 
     while(status != 0) {
         cs_low();
-        status = sd_send_command(APP_CMD, RESP_R1, 0, 0, 0);
+        status = sd_send_command(APP_CMD, RESP_R1, 0, 0x87, 0);
         cs_high();
         cs_low();
-        status = sd_send_command(APP_SEND_OP_COND, RESP_R1, 0x40000000, 0, 0);
+        status = sd_send_command(APP_SEND_OP_COND, RESP_R1, 0x40000000, 0x87, 0);
         cs_high();
     }
 
     //read the OCR register
     cs_low();
-    status = sd_send_command(APP_CMD, RESP_R1, 0, 0, 0);
+    status = sd_send_command(APP_CMD, RESP_R1, 0, 0x87, 0);
     cs_high();
     if(status != 0x00) {
         while(1);
         return false;
     }
     cs_low();
-    status = sd_send_command(READ_OCR, RESP_R3, 0, 0, response);
+    status = sd_send_command(READ_OCR, RESP_R3, 0, 0x87, response);
     cs_high();
 
     uint32_t ocr = response[0];
@@ -238,7 +250,20 @@ uint8_t init_sd_card2() {
         error(E_SD_FAIL_FS_INIT);
     }
 
-    FL_FILE *file = fl_fopen("/test.txt", "w");
+    //count the number of flies in the root directory of the SD card
+    uint16_t root_dir_files = 0;
+    FL_DIR dirstat;
+    if(!fl_opendir("/", &dirstat)) {
+        error(E_SD_FAIL_FS_INIT);
+    }
+    struct fs_dir_ent dirent;
+    while(!fl_readdir(&dirstat, &dirent)) {
+        root_dir_files++;
+    }
+
+    sprintf(GLOBAL_FILENAME, "/log_%04x.txt", root_dir_files);
+
+    FL_FILE *file = fl_fopen(GLOBAL_FILENAME, "w");
 
     if(!file) {
         error(E_SD_FAIL_READ_FILE);
@@ -255,7 +280,7 @@ uint8_t init_sd_card2() {
     int retval = fl_fwrite(header, 1, sizeof(header), file);
     fl_fclose(file);
 
-    return true;
+    return retval;
 }
 
 void init_spi() {

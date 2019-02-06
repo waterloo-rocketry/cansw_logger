@@ -3,6 +3,7 @@
 #include "init.h"
 #include "canlib/dspic33epxxxgp50x/dspic33epxxxgp50x_can.h"
 #include "can_syslog.h"
+#include "sd.h"
 
 //required for delay functions
 #include <libpic30.h>
@@ -25,11 +26,51 @@ int main() {
     //turn on LED 1 (the red one).
     LED_1_ON();
 
-    //wait 10ms
-    __delay32(10 * (FCY / 1000));
+    //wait 20ms. SD card recommends 10, this is just to be safe
+    __delay32(20 * (FCY / 1000));
     //Continue with initialization
     init_oscillator();
     init_peripherals();
+    LED_2_ON();
+
+    //log three CAN messages to SD card
+    can_msg_t msg1, msg2, msg3;
+    msg1.sid = 0x7EF;
+    msg1.data[0] = 0;
+    msg1.data[1] = 1;
+    msg1.data[2] = 2;
+    msg1.data_len = 3;
+
+    msg2.sid = 0x110;
+    msg2.data[0] = 4;
+    msg2.data[1] = 5;
+    msg2.data[2] = 6;
+    msg2.data[3] = 7;
+    msg2.data[4] = 8;
+    msg2.data[5] = 9;
+    msg2.data_len = 6;
+
+    msg3.sid = 0x453;
+    msg3.data[0] = 10;
+    msg3.data[1] = 11;
+    msg3.data[2] = 12;
+    msg3.data[3] = 13;
+    msg3.data[4] = 14;
+    msg3.data[5] = 15;
+    msg3.data[6] = 16;
+    msg3.data[7] = 107;
+    msg3.data_len = 8;
+
+    handle_can_interrupt(&msg1);
+    handle_can_interrupt(&msg2);
+    handle_can_interrupt(&msg3);
+
+    LED_2_OFF();
+
+    //force those messages to flush
+    force_log_everything();
+
+    LED_1_OFF();
 
     //timing parameters that cause a bit time of 24us
     can_timing_t timing;
