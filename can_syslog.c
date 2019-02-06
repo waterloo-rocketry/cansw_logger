@@ -6,8 +6,8 @@
 
 //private functions
 static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
-                                          const can_msg_t *message,
-                                          char *buffer);
+        const can_msg_t *message,
+        char *buffer);
 
 /* CAN logged message format:
  * III L: XX XX XX XX XX XX XX XX TTTTTTTTn
@@ -35,44 +35,48 @@ static struct log_buffer log_buffers[CAN_LOG_BUFFERS];
 uint8_t _log_into_index;
 
 //public functions
-void init_can_syslog(void) {
+void init_can_syslog(void)
+{
     _log_into_index = 0;
     uint8_t i;
-    for(i = 0; i < CAN_LOG_BUFFERS; ++i) {
+    for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
         log_buffers[i].ready_to_log = false;
         log_buffers[i].buffer_index = 0;
     }
 }
 
-void handle_can_interrupt(const can_msg_t *message) {
+void handle_can_interrupt(const can_msg_t *message)
+{
     //we're gonna copy this message into log_buffers[_log_into_index]
     struct log_buffer *buf = &(log_buffers[_log_into_index]);
 
     //check if there's room in this one
-    if(512 - buf->buffer_index < MESSAGE_LENGTH_CHARS) {
+    if (512 - buf->buffer_index < MESSAGE_LENGTH_CHARS) {
         //todo, fix this
     }
 
     uint8_t step_ahead = can_message_to_buffer(0xcafebabe,
-                                               message,
-                                               buf->buffer + buf->buffer_index);
+                         message,
+                         buf->buffer + buf->buffer_index);
     buf->buffer_index += step_ahead;
 }
 
-void force_log_everything(void) {
+void force_log_everything(void)
+{
     //TODO
     sd_card_log_to_file(log_buffers[0].buffer, log_buffers[0].buffer_index);
 }
 
-void can_syslog_heartbeat(void) {
+void can_syslog_heartbeat(void)
+{
     //TODO
-    while(1);
-    
+    while (1);
+
     uint8_t i;
-    for(i = 0; i < CAN_LOG_BUFFERS; ++i) {
-        if(log_buffers[i].ready_to_log) {
+    for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
+        if (log_buffers[i].ready_to_log) {
             sd_card_log_to_file(log_buffers[i].buffer,
-                         strlen(log_buffers[i].buffer));
+                                strlen(log_buffers[i].buffer));
             memset(log_buffers[i].buffer, 0, sizeof(log_buffers[i].buffer));
             log_buffers[i].ready_to_log = false;
         }
@@ -86,8 +90,9 @@ void can_syslog_heartbeat(void) {
  * least that much memory available
  */
 static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
-                                          const can_msg_t *message,
-                                          char *buffer) {
+        const can_msg_t *message,
+        char *buffer)
+{
     const char nibble_to_char[] = {
         '0', '1', '2', '3',
         '4', '5', '6', '7',
@@ -108,18 +113,20 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
     //write a space, then the data
     buffer[6] = ' ';
     uint8_t i;
-    for(i = 0; i < 8; ++i) {
-        if(message->data_len >= (8-i)) {
+    for (i = 0; i < 8; ++i) {
+        if (message->data_len >= (8 - i)) {
             //I am so sorry.
-            buffer[7 + 3*i] = nibble_to_char[(message->data[message->data_len - 8 + i] >> 4) & 0xf];
-            buffer[7 + 3*i + 1] = nibble_to_char[message->data[message->data_len - 8 + i] & 0xf];
+            buffer[7 + 3 * i] = nibble_to_char[(message->data[message->data_len - 8 + i] >>
+                                                4) & 0xf];
+            buffer[7 + 3 * i + 1] = nibble_to_char[message->data[message->data_len - 8 + i]
+                                                   & 0xf];
         } else {
             //no data to write, put a blank
-            buffer[7 + 3*i] = ' ';
-            buffer[7 + 3*i + 1] = ' ';
+            buffer[7 + 3 * i] = ' ';
+            buffer[7 + 3 * i + 1] = ' ';
         }
         //write a space following the data
-        buffer[7 + 3*i + 2] = ' ';
+        buffer[7 + 3 * i + 2] = ' ';
     }
 
     //write the timestamp. Max index the for loop will write to is

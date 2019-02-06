@@ -8,9 +8,10 @@
 //required for delay functions
 #include <libpic30.h>
 
-void can_callback_function(const can_msg_t *message) {
+void can_callback_function(const can_msg_t *message)
+{
     //handle a "LED_ON" or "LED_OFF" message
-    if((message->sid & 0x7E0) == 0x7E0) {
+    if ((message->sid & 0x7E0) == 0x7E0) {
         LED_1_ON();
         LED_2_ON();
     } else if ((message->sid & 0x7E0) == 0x7C0) {
@@ -19,7 +20,8 @@ void can_callback_function(const can_msg_t *message) {
     }
 }
 
-int main() {
+int main()
+{
     //initialize the pins first so we can use the LEDs to tell us if init fails
     init_pins();
 
@@ -87,6 +89,6 @@ int main() {
     LED_1_OFF();
     LED_2_OFF();
 
-    while(1) {
+    while (1) {
     }
 }

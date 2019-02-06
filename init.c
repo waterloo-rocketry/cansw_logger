@@ -5,7 +5,8 @@
 #include <stdbool.h>
 
 //Set up pin registers
-void init_pins() {
+void init_pins()
+{
     //LEDs off at startup
     LATBbits.LATB13 = 0;
     LATBbits.LATB14 = 0;
@@ -22,7 +23,8 @@ void init_pins() {
 
 //Get running off of the external oscillator.
 //Currently set to make Fosc 50MHz, which means 25M instructions per second.
-void init_oscillator() {
+void init_oscillator()
+{
     //divide input frequency (16M) by 4 to get 4M
     CLKDIVbits.PLLPRE = 0x02;
 
@@ -65,11 +67,12 @@ void init_oscillator() {
     *w = z;
 
     //wait until we're running off of the external clock
-    while(OSCCONbits.COSC != 0x03) {}
+    while (OSCCONbits.COSC != 0x03) {}
 }
 
 
-void init_peripherals() {
+void init_peripherals()
+{
     init_spi();
     init_sd_card2();
     init_can_syslog();

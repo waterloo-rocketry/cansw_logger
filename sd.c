@@ -13,19 +13,21 @@
 
 static char GLOBAL_FILENAME[20];
 
-static void spi2_send(uint8_t data) {
+static void spi2_send(uint8_t data)
+{
     __delay32(FCY / 1000);
-    while(SPI2STATbits.SPITBF) {}
+    while (SPI2STATbits.SPITBF) {}
     SPI2BUF = data;
-    while(!SPI2STATbits.SPIRBF) {}
+    while (!SPI2STATbits.SPIRBF) {}
     uint8_t __attribute__((unused)) temp = SPI2BUF;
 }
 
-static uint8_t spi2_read(void) {
+static uint8_t spi2_read(void)
+{
     __delay32(FCY / 1000);
-    while(SPI2STATbits.SPITBF) {};
+    while (SPI2STATbits.SPITBF) {};
     SPI2BUF = 0xFF;
-    while(!SPI2STATbits.SPIRBF) {};
+    while (!SPI2STATbits.SPIRBF) {};
     uint8_t temp = SPI2BUF;
     //wait until SPIBEC is 0
     return temp;
@@ -51,10 +53,11 @@ static uint8_t sd_send_command(uint8_t command,
                                uint8_t expected_response,
                                uint32_t argument,
                                uint8_t crc,
-                               uint8_t *output) {
+                               uint8_t *output)
+{
     //step 0, if the card is busy, wait (unless CMD0)
-    if(command != GO_IDLE_STATE) {
-        while(spi2_read() != 0xFF) {};
+    if (command != GO_IDLE_STATE) {
+        while (spi2_read() != 0xFF) {};
     }
 
     //step 1, write the command out onto spi
@@ -71,18 +74,18 @@ static uint8_t sd_send_command(uint8_t command,
     //step 4, wait for a R1 response
     uint16_t status = spi2_read();
     int i;
-    for(i = 0; i < 10; ++i) {
-        if((status & 0x80) == 0) {
+    for (i = 0; i < 10; ++i) {
+        if ((status & 0x80) == 0) {
             break;
         }
         status = spi2_read();
     }
     //step 5, if we're expecting a R1b response, wait for DO to go high before we return
-    if(expected_response == RESP_R1b) {
-        while(spi2_read() != 0xFF) {}
+    if (expected_response == RESP_R1b) {
+        while (spi2_read() != 0xFF) {}
     }
     //step 6, if we're waiting for an R3 or R7 response, read the next 4 bytes into output
-    else if(expected_response == RESP_R3 || expected_response == RESP_R7) {
+    else if (expected_response == RESP_R3 || expected_response == RESP_R7) {
         output[0] = spi2_read();
         output[1] = spi2_read();
         output[2] = spi2_read();
@@ -93,20 +96,21 @@ static uint8_t sd_send_command(uint8_t command,
 }
 
 int media_read(unsigned long sector,
-                unsigned char *buffer,
-                unsigned long sector_count) {
+               unsigned char *buffer,
+               unsigned long sector_count)
+{
     uint32_t address = sector;
     uint8_t i;
-    for(i = 0; i < sector_count; ++i) {
+    for (i = 0; i < sector_count; ++i) {
         cs_low();
         uint8_t status = sd_send_command(READ_SINGLE_BLOCK, RESP_R1, address, 0, 0);
-        if(status != 0) {
+        if (status != 0) {
             error(E_SD_FAIL_READ_BLOCK);
         }
         uint8_t token;
-        while((token = spi2_read()) == 0xFF) {}
+        while ((token = spi2_read()) == 0xFF) {}
         uint16_t i;
-        for(i = 0; i < 512; ++i) {
+        for (i = 0; i < 512; ++i) {
             buffer[i] = spi2_read();
         }
         uint16_t crc = spi2_read();
@@ -123,18 +127,19 @@ int media_read(unsigned long sector,
 
 int media_write(unsigned long sector,
                 unsigned char *buffer,
-                unsigned long sector_count) {
+                unsigned long sector_count)
+{
     uint32_t address = sector;
     uint8_t i;
-    for(i = 0; i < sector_count; ++i) {
+    for (i = 0; i < sector_count; ++i) {
         cs_low();
         uint8_t status = sd_send_command(WRITE_BLOCK, RESP_R1, address, 0, 0);
-        if(status != 0) {
+        if (status != 0) {
             error(E_SD_FAIL_WRITE_BLOCK);
         }
         //send out 10 bytes of FF to give the card time to get ready
         uint16_t j;
-        for(j = 0; j < 10; ++j) {
+        for (j = 0; j < 10; ++j) {
             spi2_send(0xFF);
         }
         spi2_send(0xFF);
@@ -142,7 +147,7 @@ int media_write(unsigned long sector,
         spi2_send(0xFE);
         //write out 512 bytes of buffer
 
-        for(j = 0; j < 512; ++j) {
+        for (j = 0; j < 512; ++j) {
             spi2_send(buffer[j]);
         }
         //write out 2 bytes of CRC. These aren't used
@@ -151,12 +156,12 @@ int media_write(unsigned long sector,
 
         //read the data response (0bxxx00101)
         uint8_t data_resp = spi2_read();
-        if((data_resp & 0x1f) != 5) {
+        if ((data_resp & 0x1f) != 5) {
             error(E_SD_FAIL_WRITE_DATA_RESP);
         }
 
         //wait until the card stops being busy
-        while(spi2_read() != 0xFF);
+        while (spi2_read() != 0xFF);
 
         cs_high();
         buffer += 512;
@@ -165,28 +170,30 @@ int media_write(unsigned long sector,
     return 1;
 }
 
-void sd_card_log_to_file(const char *buffer, uint16_t length) {
+void sd_card_log_to_file(const char *buffer, uint16_t length)
+{
     FL_FILE *file = fl_fopen(GLOBAL_FILENAME, "a");
-    if(!file) {
+    if (!file) {
         error(E_SD_FAIL_OPEN_FILE);
     }
     int retval = fl_fwrite(buffer, 1, length, file);
 
-    if(!retval) {
+    if (!retval) {
         error(E_SD_FAIL_OPEN_FILE);
     }
 
     fl_fclose(file);
 }
 
-uint8_t init_sd_card2() {
+uint8_t init_sd_card2()
+{
     //based on a tutorial, set CS and MOSI high, and toggle SCK 74 times
     cs_high();
     int i;
-    for(i = 0; i < 10; ++i) {
+    for (i = 0; i < 10; ++i) {
         spi2_send(0xFF);
     }
-    for(i = 0; i < 1000; ++i) ;
+    for (i = 0; i < 1000; ++i) ;
 
     cs_low();
     uint8_t status = sd_send_command(GO_IDLE_STATE, RESP_R1, 0, 0x95, 0);
@@ -201,18 +208,18 @@ uint8_t init_sd_card2() {
     cs_low();
     status = sd_send_command(SEND_IF_COND, RESP_R7, 0x1AA, 0x87, response);
     cs_high();
-    if(status != 0x01) {
+    if (status != 0x01) {
         error(E_SD_FAIL_SEND_IF_COND);
         //illegal command, using a weird version of SD card. Return false
         return false;
     }
-    if(response[3] != 0xAA || (response[2] &0x01) != 1) {
+    if (response[3] != 0xAA || (response[2] & 0x01) != 1) {
         error(E_SD_FAIL_VOLTAGE_CHECK);
         //voltage illegal, return false I guess
         return false;
     }
 
-    while(status != 0) {
+    while (status != 0) {
         cs_low();
         status = sd_send_command(APP_CMD, RESP_R1, 0, 0x87, 0);
         cs_high();
@@ -225,8 +232,8 @@ uint8_t init_sd_card2() {
     cs_low();
     status = sd_send_command(APP_CMD, RESP_R1, 0, 0x87, 0);
     cs_high();
-    if(status != 0x00) {
-        while(1);
+    if (status != 0x00) {
+        while (1);
         return false;
     }
     cs_low();
@@ -241,23 +248,23 @@ uint8_t init_sd_card2() {
     ocr <<= 8;
     ocr |= response[3];
 
-    if((ocr & 0x40000000) == 0) {
+    if ((ocr & 0x40000000) == 0) {
         return false;
     }
 
     fl_init();
-    if(fl_attach_media(media_read, media_write) != FAT_INIT_OK) {
+    if (fl_attach_media(media_read, media_write) != FAT_INIT_OK) {
         error(E_SD_FAIL_FS_INIT);
     }
 
     //count the number of flies in the root directory of the SD card
     uint16_t root_dir_files = 0;
     FL_DIR dirstat;
-    if(!fl_opendir("/", &dirstat)) {
+    if (!fl_opendir("/", &dirstat)) {
         error(E_SD_FAIL_FS_INIT);
     }
     struct fs_dir_ent dirent;
-    while(!fl_readdir(&dirstat, &dirent)) {
+    while (!fl_readdir(&dirstat, &dirent)) {
         root_dir_files++;
     }
 
@@ -265,7 +272,7 @@ uint8_t init_sd_card2() {
 
     FL_FILE *file = fl_fopen(GLOBAL_FILENAME, "w");
 
-    if(!file) {
+    if (!file) {
         error(E_SD_FAIL_READ_FILE);
     }
 
@@ -283,7 +290,8 @@ uint8_t init_sd_card2() {
     return retval;
 }
 
-void init_spi() {
+void init_spi()
+{
     //enable spi module 2 as master mode
     SPI2CON1bits.DISSCK = 0; //enable sck
     SPI2CON1bits.DISSDO = 0; //enable SDO
