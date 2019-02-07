@@ -1,10 +1,13 @@
 #include "can_syslog.h"
 #include "sd.h"
+#include "error.h"
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 //private functions
+static void log_can_buffer(uint8_t index);
+static bool is_can_buffer_full(uint8_t index);
 static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
         const can_msg_t *message,
         char *buffer);
@@ -22,11 +25,12 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
 
 #define MESSAGE_LENGTH_CHARS 40
 #define CAN_LOG_BUFFERS       3
+#define CAN_BUFFER_SIZE     512
 
 struct log_buffer {
     bool ready_to_log;
     uint16_t buffer_index;
-    char buffer[512];
+    char buffer[CAN_BUFFER_SIZE];
 };
 
 static struct log_buffer log_buffers[CAN_LOG_BUFFERS];
@@ -47,38 +51,55 @@ void init_can_syslog(void)
 
 void handle_can_interrupt(const can_msg_t *message)
 {
-    //we're gonna copy this message into log_buffers[_log_into_index]
-    struct log_buffer *buf = &(log_buffers[_log_into_index]);
-
-    //check if there's room in this one
-    if (512 - buf->buffer_index < MESSAGE_LENGTH_CHARS) {
-        //todo, fix this
+    //move _log_into_index to the next buffer with room left in it
+    uint8_t i;
+    for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
+        if (is_can_buffer_full(_log_into_index)) {
+            log_buffers[_log_into_index].ready_to_log = true;
+            _log_into_index = ((_log_into_index + 1) % CAN_LOG_BUFFERS);
+        } else {
+            break;
+        }
     }
-
-    uint8_t step_ahead = can_message_to_buffer(0xcafebabe,
-                         message,
-                         buf->buffer + buf->buffer_index);
-    buf->buffer_index += step_ahead;
+    //if we're still pointing at a full buffer, then all the buffers are full
+    if (is_can_buffer_full(_log_into_index)) {
+        //there's nothing we can do. Report an error and return
+        error(E_SYSLOG_ALL_BUFFERS_FULL);
+        return;
+    } else {
+        //copy the message into this buffer
+        struct log_buffer *buf = &(log_buffers[_log_into_index]);
+        //TODO: replace hardcoded CAFEBABE with actual 32 bit us timestamp
+        uint8_t step_ahead = can_message_to_buffer(0xcafebabe,
+                             message,
+                             buf->buffer + buf->buffer_index);
+        buf->buffer_index += step_ahead;
+        //check if that caused the buffer to become full
+        if (is_can_buffer_full(_log_into_index)) {
+            //mark it as ready to log and increment buffer index
+            buf->ready_to_log = true;
+            _log_into_index = ((_log_into_index + 1) % CAN_LOG_BUFFERS);
+        }
+    }
 }
 
 void force_log_everything(void)
 {
-    //TODO
-    sd_card_log_to_file(log_buffers[0].buffer, log_buffers[0].buffer_index);
+    //go through each buffer. If there's a byte of data in them, log the buffer
+    uint8_t i;
+    for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
+        if (log_buffers[i].buffer_index != 0) {
+            log_can_buffer(i);
+        }
+    }
 }
 
 void can_syslog_heartbeat(void)
 {
-    //TODO
-    while (1);
-
     uint8_t i;
     for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
         if (log_buffers[i].ready_to_log) {
-            sd_card_log_to_file(log_buffers[i].buffer,
-                                strlen(log_buffers[i].buffer));
-            memset(log_buffers[i].buffer, 0, sizeof(log_buffers[i].buffer));
-            log_buffers[i].ready_to_log = false;
+            log_can_buffer(i);
         }
     }
 }
@@ -145,4 +166,32 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
 
     //return the length of string we just wrote. So a hardcoded 40
     return 40;
+}
+
+/*
+ * This function logs all of the characters in log_buffers[index]
+ * onto the SD card. It then resets buffer_index in that buffer to
+ * zero. Note that this function does not check ready_to_log bit,
+ * it assumes that the caller wants this buffer logged regardless
+ */
+static void log_can_buffer(uint8_t index)
+{
+    if (index >= CAN_LOG_BUFFERS) {
+        return;
+    }
+    sd_card_log_to_file(log_buffers[index].buffer,
+                        log_buffers[index].buffer_index);
+    memset(log_buffers[index].buffer, 0, sizeof(log_buffers[index].buffer));
+    log_buffers[index].ready_to_log = false;
+}
+
+static bool is_can_buffer_full(uint8_t index)
+{
+    if (index >= CAN_LOG_BUFFERS ||
+        log_buffers[index].buffer_index >= CAN_BUFFER_SIZE ||
+        (CAN_BUFFER_SIZE - log_buffers[index].buffer_index) <= MESSAGE_LENGTH_CHARS) {
+        return true;
+    } else {
+        return false;
+    }
 }
