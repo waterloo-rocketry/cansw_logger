@@ -70,10 +70,35 @@ void init_oscillator()
     while (OSCCONbits.COSC != 0x03) {}
 }
 
+/*
+ * setup timers 2 and 3 to form a 32-bit timer that ticks over every ms
+ * configure timer2 interrupt to fire when TMR2 = 25MHz / 1KHz
+ */
+void init_timers()
+{
+    //continue while idle
+    T2CONbits.TSIDL = 0;
+    //disable gated time accumulation
+    T2CONbits.TGATE = 0;
+    //do no prescaling (drive oscillator with Fp)
+    T2CONbits.TCKPS = 0;
+    //set as 16 bit timer
+    T2CONbits.T32 = 0;
+    //use  Fp as input
+    T2CONbits.TCS = 0;
+
+    //setup timer2 interrupt to fire when timer2 reaches 25000
+    PR2 = 25000;
+    //enable timer2 interrupts
+    IEC0bits.T2IE = 1;
+    //enable timer2
+    T2CONbits.TON = 1;
+}
 
 void init_peripherals()
 {
     init_spi();
     init_sd_card2();
     init_can_syslog();
+    init_timers();
 }

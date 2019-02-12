@@ -182,6 +182,7 @@ static void log_can_buffer(uint8_t index)
     sd_card_log_to_file(log_buffers[index].buffer,
                         log_buffers[index].buffer_index);
     memset(log_buffers[index].buffer, 0, sizeof(log_buffers[index].buffer));
+    log_buffers[index].buffer_index = 0;
     log_buffers[index].ready_to_log = false;
 }
 
