@@ -1,16 +1,22 @@
 #include "platform.h"
 #include <stdint.h>
 
-static uint32_t millis_counter = 0;
 uint32_t millis()
 {
-    return millis_counter;
+    //TODO, this doesn't overflow at 32 bits, and it probably should
+    return micros() / 1000;
 }
 
-void __attribute__((__interrupt__, no_auto_psv)) _T2Interrupt(void)
+/*
+ * returns the number of microseconds that have occured since
+ * the last call to init_timers, effectively since bootup. 
+ * Note that it will always return an even number, ticking every
+ * 2 microseconds
+ *
+ * This overflows every 71 minutes, since that's how many us you
+ * can fit in a 32 bit number
+ */
+uint32_t micros()
 {
-    TMR2 = 0;
-    millis_counter++;
-    IFS0bits.T2IF = 0;
-    return;
+    return (((uint32_t)TMR3) << 17) | (((uint32_t)TMR2) << 1);
 }

@@ -22,16 +22,16 @@ void init_pins()
 }
 
 //Get running off of the external oscillator.
-//Currently set to make Fosc 50MHz, which means 25M instructions per second.
+//Currently set to make Fosc 64MHz, which means 32M instructions per second.
 void init_oscillator()
 {
     //divide input frequency (16M) by 4 to get 4M
     CLKDIVbits.PLLPRE = 0x02;
 
-    //multiply the 4M by 50 to get 200M
-    PLLFBDbits.PLLDIV = 0x30;
+    //multiply the 4M by 64 to get 240M
+    PLLFBDbits.PLLDIV = 62;
 
-    //divide the 200M by 4 to get a 50M Fosc
+    //divide the 240M by 4 to get a 64M Fosc
     CLKDIVbits.PLLPOST = 0x01;
 
     //disable clock dozing, because we currently don't care about power draw
@@ -71,8 +71,7 @@ void init_oscillator()
 }
 
 /*
- * setup timers 2 and 3 to form a 32-bit timer that ticks over every ms
- * configure timer2 interrupt to fire when TMR2 = 25MHz / 1KHz
+ * setup timers 2 and 3 to form a 32-bit timer that does not fire an interrupt
  */
 void init_timers()
 {
@@ -82,23 +81,24 @@ void init_timers()
     T2CONbits.TGATE = 0;
     //do no prescaling (drive oscillator with Fp)
     T2CONbits.TCKPS = 0;
-    //set as 16 bit timer
-    T2CONbits.T32 = 0;
+    //set as 32 bit timer
+    T2CONbits.T32 = 1;
     //use  Fp as input
     T2CONbits.TCS = 0;
+    //Clear out the counts
+    TMR2 = 0;
+    TMR3 = 0;
+    //divide the input frequency by 64
+    T2CONbits.TCKPS = 2;
 
-    //setup timer2 interrupt to fire when timer2 reaches 25000
-    PR2 = 25000;
-    //enable timer2 interrupts
-    IEC0bits.T2IE = 1;
     //enable timer2
     T2CONbits.TON = 1;
 }
 
 void init_peripherals()
 {
-    init_spi();
-    init_sd_card2();
-    init_can_syslog();
+    //init_spi();
+    //init_sd_card2();
+    //init_can_syslog();
     init_timers();
 }

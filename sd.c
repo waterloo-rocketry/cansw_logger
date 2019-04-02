@@ -9,7 +9,6 @@
 
 #define cs_high() (LATBbits.LATB9 = 1)
 #define cs_low()  (LATBbits.LATB9 = 0)
-#define FCY 25000000
 
 static char GLOBAL_FILENAME[20];
 
