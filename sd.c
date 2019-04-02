@@ -320,7 +320,7 @@ uint8_t init_sd_card2()
         'O', 'O', ' ', 'R', 'O', 'C', 'K', 'E',
         'T', 'R', 'Y', ' ', 'C', 'A', 'N', ' ',
         'L', 'O', 'G', 'G', 'E', 'R', ' ', 'V',
-        '0', '.', '1', '.', '0', '=', '=', '\n'
+        '0', '.', '2', '.', '0', '=', '=', '\n'
     };
 
     int retval = fl_fwrite(header, 1, sizeof(header), file);

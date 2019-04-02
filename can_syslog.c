@@ -1,6 +1,7 @@
 #include "can_syslog.h"
 #include "sd.h"
 #include "error.h"
+#include "platform.h"
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -70,7 +71,7 @@ void handle_can_interrupt(const can_msg_t *message)
         //copy the message into this buffer
         struct log_buffer *buf = &(log_buffers[_log_into_index]);
         //TODO: replace hardcoded CAFEBABE with actual 32 bit us timestamp
-        uint8_t step_ahead = can_message_to_buffer(0xcafebabe,
+        uint8_t step_ahead = can_message_to_buffer(micros(),
                              message,
                              buf->buffer + buf->buffer_index);
         buf->buffer_index += step_ahead;
