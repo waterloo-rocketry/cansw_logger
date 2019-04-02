@@ -25,7 +25,7 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
 
 #define MESSAGE_LENGTH_CHARS 40
 #define CAN_LOG_BUFFERS       3
-#define CAN_BUFFER_SIZE     512
+#define CAN_BUFFER_SIZE    4096
 
 struct log_buffer {
     bool ready_to_log;
