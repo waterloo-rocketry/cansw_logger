@@ -97,8 +97,8 @@ void init_timers()
 
 void init_peripherals()
 {
-    //init_spi();
-    //init_sd_card2();
-    //init_can_syslog();
+    init_spi();
+    init_sd_card2();
+    init_can_syslog();
     init_timers();
 }
