@@ -300,8 +300,8 @@ void init_spi()
     SPI2CON1bits.SSEN   = 0; //we are not in slave mode, leave CS GPIO
     SPI2CON1bits.CKP    = 1; //idle clock level high.
     SPI2CON1bits.MSTEN  = 1; //use master mode
-    SPI2CON1bits.SPRE   = 0; //secondary prescale 8:1
-    SPI2CON1bits.PPRE   = 0; //primary prescale 8:1
+    SPI2CON1bits.SPRE   = 6; //secondary prescale 2:1
+    SPI2CON1bits.PPRE   = 3; //primary prescale 1:1
     SPI2CON2bits.FRMEN  = 0; //don't use framed mode
     SPI2CON2bits.SPIBEN = 0; //use standard mode, not enhanced mode
 
