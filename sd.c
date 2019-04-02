@@ -14,22 +14,64 @@ static char GLOBAL_FILENAME[20];
 
 static void spi2_send(uint8_t data)
 {
-    __delay32(FCY / 1000);
     while (SPI2STATbits.SPITBF) {}
     SPI2BUF = data;
     while (!SPI2STATbits.SPIRBF) {}
     uint8_t __attribute__((unused)) temp = SPI2BUF;
 }
 
+static void spi2_send_buffer(uint8_t *data, uint16_t data_len)
+{
+    uint16_t sent = 0, rcvd = 0;
+    while (SPI2STATbits.SPITBF) {}
+    while (sent < data_len) {
+        if (!SPI2STATbits.SPITBF) {
+            SPI2BUF = data[sent];
+            sent++;
+        }
+        if (SPI2STATbits.SPIRBF) {
+            uint8_t __attribute__((unused)) temp = SPI2BUF;
+            rcvd++;
+        }
+    }
+    while (rcvd < data_len) {
+        if (SPI2STATbits.SPIRBF) {
+            uint8_t __attribute__((unused)) temp = SPI2BUF;
+            rcvd++;
+        }
+    }
+}
+
 static uint8_t spi2_read(void)
 {
-    __delay32(FCY / 1000);
     while (SPI2STATbits.SPITBF) {};
     SPI2BUF = 0xFF;
     while (!SPI2STATbits.SPIRBF) {};
     uint8_t temp = SPI2BUF;
     //wait until SPIBEC is 0
     return temp;
+}
+
+static void spi2_read_buffer(uint8_t *data, uint16_t data_len)
+{
+    uint16_t sent = 0, rcvd = 0;
+    while (SPI2STATbits.SPITBF) {}
+    while (sent < data_len) {
+        if (!SPI2STATbits.SPITBF) {
+            SPI2BUF = 0xFF;
+            sent++;
+        }
+        if (SPI2STATbits.SPIRBF) {
+            data[rcvd] = SPI2BUF;
+            rcvd++;
+        }
+    }
+    while (rcvd < data_len) {
+        if (SPI2STATbits.SPIRBF) {
+            data[rcvd] = SPI2BUF;
+            rcvd++;
+        }
+    }
 }
 
 //SD card commands
@@ -108,15 +150,14 @@ int media_read(unsigned long sector,
         }
         uint8_t token;
         while ((token = spi2_read()) == 0xFF) {}
-        uint16_t i;
-        for (i = 0; i < 512; ++i) {
-            buffer[i] = spi2_read();
-        }
+
+        spi2_read_buffer(buffer, 512);
+
         uint16_t crc = spi2_read();
         crc <<= 8;
         crc |= spi2_read();
         cs_high();
-        __delay32(FCY / 100);
+
         buffer += 512;
         address += 512;
     }
@@ -146,9 +187,8 @@ int media_write(unsigned long sector,
         spi2_send(0xFE);
         //write out 512 bytes of buffer
 
-        for (j = 0; j < 512; ++j) {
-            spi2_send(buffer[j]);
-        }
+        spi2_send_buffer(buffer, 512);
+
         //write out 2 bytes of CRC. These aren't used
         spi2_send(0);
         spi2_send(0);

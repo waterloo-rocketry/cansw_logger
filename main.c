@@ -60,10 +60,13 @@ int main()
     msg.data[5] = 0x6b;
     msg.data[6] = 0x00;
     msg.data[7] = 0xb5;
-    msg.sid = 0;
-    for (msg.sid = 0; msg.sid < 2000; msg.sid++) {
-        handle_can_interrupt(&msg);
-        can_syslog_heartbeat();
+    uint8_t i;
+    for (i = 0; i < 10; ++i) {
+        msg.sid = 0;
+        for (msg.sid = 0; msg.sid < 2000; msg.sid++) {
+            handle_can_interrupt(&msg);
+            can_syslog_heartbeat();
+        }
     }
     force_log_everything();
 
