@@ -7,11 +7,6 @@
 #include "canlib/message_types.h"
 #include "sd.h"
 
-//required for delay functions
-#include <libpic30.h>
-
-void init_timers();
-
 void can_callback_function(const can_msg_t *message)
 {
     //handle a "LED_ON" or "LED_OFF" message
@@ -34,46 +29,18 @@ int main()
 {
     //initialize the pins first so we can use the LEDs to tell us if init fails
     init_pins();
-    //initialize the oscillator so we're running faster
-    init_oscillator();
-    init_timers();
-
-    //wait 20ms. SD card recommends 10, this is just to be safe
-    __delay32(20 * (FCY / 1000));
 
     //turn on LED 1 (the red one)
     LED_1_ON();
+
+    //initialize the oscillator so we're running faster
+    init_oscillator();
+    init_timers();
     //initialize spi, SD card, and CAN syslog
     init_peripherals();
 
-    //turn on LED 2 (the blue one)
-    LED_2_ON();
-
-    //log 2000 CAN messages
-    can_msg_t msg;
-    msg.data_len = 8;
-    msg.data[0] = 0xca;
-    msg.data[1] = 0xfe;
-    msg.data[2] = 0xba;
-    msg.data[3] = 0xbe;
-    msg.data[4] = 0xb1;
-    msg.data[5] = 0x6b;
-    msg.data[6] = 0x00;
-    msg.data[7] = 0xb5;
-    uint8_t i;
-    for (i = 0; i < 10; ++i) {
-        msg.sid = 0;
-        for (msg.sid = 0; msg.sid < 2000; msg.sid++) {
-            handle_can_interrupt(&msg);
-            can_syslog_heartbeat();
-        }
-    }
-    force_log_everything();
-
+    //turn off red LED, since we're done initializing
     LED_1_OFF();
-    LED_2_OFF();
-    while (1);
-
 
     //timing parameters that cause a bit time of 24us
     /* FCAN is 32MHz,

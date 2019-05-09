@@ -1,8 +1,10 @@
 #include "init.h"
 #include "sd.h"
 #include "can_syslog.h"
+#include "platform.h"
 #include <xc.h>
 #include <stdbool.h>
+#include <libpic30.h>
 
 //Set up pin registers
 void init_pins()
@@ -97,8 +99,10 @@ void init_timers()
 
 void init_peripherals()
 {
+    // initialize CAN first, so that we don't miss incoming messages
+    init_can_syslog();
+    // Wait 20ms before initializing SD card, to let it boot up
+    __delay32(20 * (FCY / 1000));
     init_spi();
     init_sd_card2();
-    init_can_syslog();
-    init_timers();
 }

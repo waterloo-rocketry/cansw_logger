@@ -7,6 +7,9 @@ void init_pins();
 //Set up proper oscillator registers
 void init_oscillator();
 
+//Initialize timer2 to be used for millis functionality
+void init_timers();
+
 //Set up the SPI module. CAN to come later.
 void init_peripherals();
 
