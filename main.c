@@ -8,7 +8,7 @@
 #include "can_tx_buffer.h"
 #include "sd.h"
 #include "error.h"
-
+#include "timing_util.h"
 #include <string.h>
 #include <libpic30.h>
 
@@ -18,11 +18,11 @@ void can_callback_function(const can_msg_t *message)
     //handle a "LED_ON" or "LED_OFF" message
     switch (get_message_type(message)) {
         case MSG_LEDS_ON:
-            //LED_1_ON();
+            LED_1_ON();
             LED_2_ON();
             break;
         case MSG_LEDS_OFF:
-            //LED_1_OFF();
+            LED_1_OFF();
             LED_2_OFF();
             break;
         default:
@@ -59,13 +59,7 @@ int main()
      * so BRP + 1 = 32
      */
     can_timing_t timing;
-    timing.brp = 18;
-    timing.sjw = 3;
-    timing.btlmode = 1;
-    timing.prseg = 0;
-    timing.sam = 0;
-    timing.seg1ph = 4;
-    timing.seg2ph = 4;
+    can_generate_timing_params(FCY, &timing);
     init_can(&timing, can_callback_function, false);
 
     //turn on the blue LED to show that initialization has succeeded

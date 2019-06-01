@@ -107,11 +107,11 @@ void can_syslog_heartbeat(void)
         if (log_buffers[i].ready_to_log) {
             log_can_buffer(i);
             time_last_buffer_logged = millis();
-            LED_1_ON();
+            LED_2_ON();
         }
     }
 
-    if (millis() - time_last_buffer_logged > 250) {
+    if (millis() - time_last_buffer_logged > 100) {
         LED_2_OFF();
     }
 }
