@@ -26,8 +26,8 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
  */
 
 #define MESSAGE_LENGTH_CHARS 49
-#define CAN_LOG_BUFFERS       3
-#define CAN_BUFFER_SIZE    4096
+#define CAN_LOG_BUFFERS       5
+#define CAN_BUFFER_SIZE     512
 
 struct log_buffer {
     bool ready_to_log;
@@ -101,11 +101,18 @@ void force_log_everything(void)
 
 void can_syslog_heartbeat(void)
 {
+    static uint32_t time_last_buffer_logged = 0;
     uint8_t i;
     for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
         if (log_buffers[i].ready_to_log) {
             log_can_buffer(i);
+            time_last_buffer_logged = millis();
+            LED_1_ON();
         }
+    }
+
+    if (millis() - time_last_buffer_logged > 250) {
+        LED_2_OFF();
     }
 }
 

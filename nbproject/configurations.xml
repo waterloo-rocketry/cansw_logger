@@ -41,6 +41,8 @@
       <logicalFolder name="f2" displayName="canlib" projectFiles="true">
         <itemPath>canlib/dspic33epxxxgp50x/dspic33epxxxgp50x_can.c</itemPath>
         <itemPath>canlib/can_common.c</itemPath>
+        <itemPath>canlib/util/can_tx_buffer.c</itemPath>
+        <itemPath>canlib/util/safe_ring_buffer.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="fat_io_lib" projectFiles="true">
         <itemPath>fat_io_lib/fat_access.c</itemPath>
@@ -124,7 +126,8 @@
         <property key="enable-short-double" value="false"/>
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
-        <property key="extra-include-directories" value=""/>
+        <property key="extra-include-directories"
+                  value="canlib;canlib/util;canlib/dspic33epxxxgp50x"/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>

@@ -2,6 +2,7 @@
 #define LOGGER_ERROR_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {
     //SD card related failures
@@ -21,5 +22,10 @@ typedef enum {
 } cansw_logger_error_t;
 
 void error(cansw_logger_error_t error);
+
+cansw_logger_error_t get_last_error(void);
+
+bool any_errors(void);
+
 
 #endif //compile guard
