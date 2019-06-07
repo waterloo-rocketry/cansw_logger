@@ -14,7 +14,6 @@ static char GLOBAL_FILENAME[20];
 
 static void spi2_send(uint8_t data)
 {
-    while (SPI2STATbits.SPITBF) {}
     SPI2BUF = data;
     while (!SPI2STATbits.SPIRBF) {}
     uint8_t __attribute__((unused)) temp = SPI2BUF;
@@ -22,55 +21,26 @@ static void spi2_send(uint8_t data)
 
 static void spi2_send_buffer(uint8_t *data, uint16_t data_len)
 {
-    uint16_t sent = 0, rcvd = 0;
-    while (SPI2STATbits.SPITBF) {}
-    while (sent < data_len) {
-        if (!SPI2STATbits.SPITBF) {
-            SPI2BUF = data[sent];
-            sent++;
-        }
-        if (SPI2STATbits.SPIRBF) {
-            uint8_t __attribute__((unused)) temp = SPI2BUF;
-            rcvd++;
-        }
-    }
-    while (rcvd < data_len) {
-        if (SPI2STATbits.SPIRBF) {
-            uint8_t __attribute__((unused)) temp = SPI2BUF;
-            rcvd++;
-        }
+    while (data_len) {
+        spi2_send(*data);
+        data++;
+        data_len--;
     }
 }
 
 static uint8_t spi2_read(void)
 {
-    while (SPI2STATbits.SPITBF) {};
     SPI2BUF = 0xFF;
-    while (!SPI2STATbits.SPIRBF) {};
-    uint8_t temp = SPI2BUF;
-    //wait until SPIBEC is 0
-    return temp;
+    while (!SPI2STATbits.SPIRBF) {}
+    return SPI2BUF;
 }
 
 static void spi2_read_buffer(uint8_t *data, uint16_t data_len)
 {
-    uint16_t sent = 0, rcvd = 0;
-    while (SPI2STATbits.SPITBF) {}
-    while (sent < data_len) {
-        if (!SPI2STATbits.SPITBF) {
-            SPI2BUF = 0xFF;
-            sent++;
-        }
-        if (SPI2STATbits.SPIRBF) {
-            data[rcvd] = SPI2BUF;
-            rcvd++;
-        }
-    }
-    while (rcvd < data_len) {
-        if (SPI2STATbits.SPIRBF) {
-            data[rcvd] = SPI2BUF;
-            rcvd++;
-        }
+    while (data_len) {
+        *data = spi2_read();
+        data++;
+        data_len--;
     }
 }
 
