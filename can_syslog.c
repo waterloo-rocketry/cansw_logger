@@ -111,7 +111,7 @@ void can_syslog_heartbeat(void)
         }
     }
 
-    if (millis() - time_last_buffer_logged > 100) {
+    if (millis() - time_last_buffer_logged > 10) {
         LED_2_OFF();
     }
 }
