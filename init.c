@@ -28,7 +28,7 @@ void init_pins()
 void init_oscillator()
 {
     //divide input frequency (16M) by 4 to get 4M
-    CLKDIVbits.PLLPRE = 0x02;
+    CLKDIVbits.PLLPRE = 0x01;
 
     //multiply the 4M by 64 to get 240M
     PLLFBDbits.PLLDIV = 62;
