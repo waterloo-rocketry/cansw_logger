@@ -27,13 +27,13 @@ void init_pins()
 //Currently set to make Fosc 64MHz, which means 32M instructions per second.
 void init_oscillator()
 {
-    //divide input frequency (12M) by 3 to get 4M
+    //divide input frequency (12MHz) by 3 to get 4MHz
     CLKDIVbits.PLLPRE = 0x01;
 
-    //multiply the 4M by 64 to get 240M
+    //multiply the 4MHz by 64 to get 256MHz
     PLLFBDbits.PLLDIV = 62;
 
-    //divide the 240M by 4 to get a 64M Fosc
+    //divide the 256MHz by 4 to get a 64M Fosc
     CLKDIVbits.PLLPOST = 0x01;
 
     //disable clock dozing, because we currently don't care about power draw
