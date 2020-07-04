@@ -27,6 +27,9 @@ void init_pins()
 //Currently set to make Fosc 64MHz, which means 32M instructions per second.
 void init_oscillator()
 {
+    //The following register settings look wrong for what the comment says
+    //They are actually correct, read the datasheet if you don't belive me!
+    
     //divide input frequency (12MHz) by 3 to get 4MHz
     CLKDIVbits.PLLPRE = 0x01;
 
