@@ -48,30 +48,41 @@ void init_oscillator()
      * http://ww1.microchip.com/downloads/en/DeviceDoc/39700c.pdf
      */
 
+    
+    /*
+     !!! This part was commented out of the code due to an issue with the PIC
+     not switching to the correct clock. The process would fail and default to 
+     FRC. 
+     * 
+     Instead, in the config, the PIC will default to using the Primary Osc. 
+     which fixes the issue.
+     
+     Switching code below is now depreciated.
+     */
     //to unlock NOSC, need to write 0x9A, 0x78, and NOSC to OSCCONH in three
     //consecutive instructions
-    volatile register uint8_t *w = &OSCCONH;
-    register uint8_t x = 0x78;
-    register uint8_t y = 0x9A;
-    //desired NOSC value is lower nibble of z, 3
-    register uint8_t z = 0x73;
+        //    volatile register uint8_t *w = &OSCCONH;
+    //    register uint8_t x = 0x78;
+    //    register uint8_t y = 0x9A;
+    //    //desired NOSC value is lower nibble of z, 3
+    //    register uint8_t z = 0x73;
     //three consecutive writes
-    *w = x;
-    *w = y;
-    *w = z;
+    //    *w = x;
+    //    *w = y;
+    //    *w = z;
     //to perform the clock switch, we need to unlock OSCCONL and write 1 to the
     //lowest bit of OSCCONL. These need to be three consecutive instructions.
     //The two unlock writes are 0x46 and 0x57
-    w = &OSCCONL;
-    x = 0x46;
-    y = 0x57;
-    z = 0x01;
+    //    w = &OSCCONL;
+    //    x = 0x46;
+    //    y = 0x57;
+    //    z = 0x01;
     //three consecutive writes
-    *w = x;
-    *w = y;
-    *w = z;
+    //    *w = x;
+    //    *w = y;
+    //    *w = z;
 
-    //wait until we're running off of the external clock
+    //wait until we're running off of the primary oscillator clock
     while (OSCCONbits.COSC != 0x03) {}
 }
 
