@@ -9,6 +9,7 @@
 #include "sd.h"
 #include "error.h"
 #include "timing_util.h"
+#include "health_check.h"
 #include <string.h>
 #include <libpic30.h>
 
@@ -78,6 +79,8 @@ int main()
         } else {
             last_on_time = millis();
         }
+
+        health_check_current_error();
 
         //give status update
         if (millis() - last_board_status_msg > 500) {

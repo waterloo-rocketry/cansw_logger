@@ -19,6 +19,8 @@ typedef enum {
     E_SD_FAIL_WRITE_DATA_RESP,
     //syslog related failures
     E_SYSLOG_ALL_BUFFERS_FULL,
+    //Health Check Related Failures
+    E_CURRENT_DRAW,
 } cansw_logger_error_t;
 
 void error(cansw_logger_error_t error);
