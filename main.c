@@ -10,6 +10,7 @@
 #include "error.h"
 #include "timing_util.h"
 #include "health_check.h"
+#include "mcc_generated_files/adc1.h"
 #include <string.h>
 #include <libpic30.h>
 
@@ -49,6 +50,8 @@ int main()
     init_peripherals();
     txb_init(txb_pool, sizeof(txb_pool), can_send, can_send_rdy);
 
+    //initilize ADC
+    ADC1_Initialize();
 
     //turn off blue LED, since we're done initializing
     LED_1_OFF();

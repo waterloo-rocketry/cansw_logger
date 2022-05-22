@@ -44,6 +44,7 @@
 
 // Configuration bits: selected in the GUI
 
+/*
 // FICD
 #pragma config ICS = PGD1    //ICD Communication Channel Select bits->Communicate on PGEC1 and PGED1
 #pragma config JTAGEN = OFF    //JTAG Enable bit->JTAG is disabled
@@ -91,7 +92,7 @@ void SYSTEM_Initialize(void)
     INTERRUPT_GlobalEnable();
     SYSTEM_CORCONModeOperatingSet(CORCON_MODE_PORVALUES);
 }
-
+*/
 /**
  End of File
 */
