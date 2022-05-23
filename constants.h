@@ -12,8 +12,8 @@
 extern "C" {
 #endif
 
-#define BATT_CURR_SCALAR 3.00 //RANDOM VALUE
-#define BATTERY_CURRENT_THRESHOLD 0.05 // RANDOM VALUE
+#define BATT_CURR_SCALAR 8 //Will give current in mA
+#define BATTERY_CURRENT_THRESHOLD 300
 
 
 #ifdef	__cplusplus
