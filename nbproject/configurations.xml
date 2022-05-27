@@ -24,22 +24,6 @@
         <itemPath>fat_io_lib/fat_types.h</itemPath>
         <itemPath>fat_io_lib/fat_write.h</itemPath>
       </logicalFolder>
-      <logicalFolder name="MCC Generated Files"
-                     displayName="MCC Generated Files"
-                     projectFiles="true">
-        <itemPath>mcc_generated_files/reset_types.h</itemPath>
-        <itemPath>mcc_generated_files/traps.h</itemPath>
-        <itemPath>mcc_generated_files/pin_manager.h</itemPath>
-        <itemPath>mcc_generated_files/interrupt_manager.h</itemPath>
-        <itemPath>mcc_generated_files/system_types.h</itemPath>
-        <itemPath>mcc_generated_files/clock.h</itemPath>
-        <itemPath>mcc_generated_files/reset.h</itemPath>
-        <itemPath>mcc_generated_files/mcc.h</itemPath>
-        <itemPath>mcc_generated_files/system.h</itemPath>
-        <itemPath>mcc_generated_files/watchdog.h</itemPath>
-        <itemPath>mcc_generated_files/adc_module_features.h</itemPath>
-        <itemPath>mcc_generated_files/adc1.h</itemPath>
-      </logicalFolder>
       <itemPath>config.h</itemPath>
       <itemPath>platform.h</itemPath>
       <itemPath>init.h</itemPath>
@@ -47,7 +31,7 @@
       <itemPath>error.h</itemPath>
       <itemPath>can_syslog.h</itemPath>
       <itemPath>health_check.h</itemPath>
-      <itemPath>constants.h</itemPath>
+      <itemPath>adc1.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -73,18 +57,6 @@
         <itemPath>fat_io_lib/fat_table.c</itemPath>
         <itemPath>fat_io_lib/fat_write.c</itemPath>
       </logicalFolder>
-      <logicalFolder name="MCC Generated Files"
-                     displayName="MCC Generated Files"
-                     projectFiles="true">
-        <itemPath>mcc_generated_files/pin_manager.c</itemPath>
-        <itemPath>mcc_generated_files/system.c</itemPath>
-        <itemPath>mcc_generated_files/reset.c</itemPath>
-        <itemPath>mcc_generated_files/traps.c</itemPath>
-        <itemPath>mcc_generated_files/clock.c</itemPath>
-        <itemPath>mcc_generated_files/mcc.c</itemPath>
-        <itemPath>mcc_generated_files/interrupt_manager.c</itemPath>
-        <itemPath>mcc_generated_files/adc1.c</itemPath>
-      </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>init.c</itemPath>
       <itemPath>sd.c</itemPath>
@@ -92,6 +64,7 @@
       <itemPath>can_syslog.c</itemPath>
       <itemPath>platform.c</itemPath>
       <itemPath>health_check.c</itemPath>
+      <itemPath>adc1.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -147,6 +120,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C30>
+        <property key="cast-align" value="false"/>
         <property key="code-model" value="default"/>
         <property key="const-model" value="default"/>
         <property key="data-model" value="default"/>
@@ -262,6 +236,7 @@
         <property key="warn-section-align" value="false"/>
       </C30-LD>
       <C30Global>
+        <property key="combine-sourcefiles" value="false"/>
         <property key="common-include-directories" value=""/>
         <property key="dual-boot-partition" value="0"/>
         <property key="fast-math" value="false"/>
@@ -325,7 +300,7 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-2afeb"/>
-        <property key="poweroptions.powerenable" value="false"/>
+        <property key="poweroptions.powerenable" value="true"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
@@ -394,7 +369,7 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-2afeb"/>
-        <property key="poweroptions.powerenable" value="false"/>
+        <property key="poweroptions.powerenable" value="true"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>

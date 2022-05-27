@@ -8,7 +8,7 @@
 #include "message_types.h"
 #include "can_tx_buffer.h"
 
-bool health_check_current_error(void) {
+bool check_bus_current_error(void) {
     uint16_t battery_current_mA = (uint16_t)ADC1_GetSingleConversion(channel_CURR_AMP)/BATT_CURR_SCALAR;
     
     if (battery_current_mA > BATTERY_CURRENT_THRESHOLD) {
@@ -21,8 +21,8 @@ bool health_check_current_error(void) {
         build_board_stat_msg(timestamp, E_BUS_OVER_CURRENT, curr_data, 2, &error_msg);
         txb_enqueue(&error_msg);
         
-        return false;
+        return true;
     }
     
-    return true;
+    return false;
 }
