@@ -92,7 +92,7 @@ int main()
             if (any_errors()) {
                 uint8_t e = (uint8_t) get_last_error();
                 build_board_stat_msg(millis(), E_LOGGING, &e, 1, &board_stat_msg);
-            } if (status_ok) {
+            } else if (status_ok) {
                 build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &board_stat_msg);
             } else {
                 //Error message already sent by check_bus_current_error
