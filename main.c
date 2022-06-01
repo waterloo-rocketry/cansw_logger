@@ -9,6 +9,8 @@
 #include "sd.h"
 #include "error.h"
 #include "timing_util.h"
+#include "health_check.h"
+#include "adc1.h"
 #include <string.h>
 #include <libpic30.h>
 
@@ -48,6 +50,8 @@ int main()
     init_peripherals();
     txb_init(txb_pool, sizeof(txb_pool), can_send, can_send_rdy);
 
+    //initilize ADC
+    ADC1_Initialize();
 
     //turn off blue LED, since we're done initializing
     LED_1_OFF();
@@ -82,14 +86,19 @@ int main()
         //give status update
         if (millis() - last_board_status_msg > 500) {
             can_msg_t board_stat_msg;
+            bool status_ok = true; //t
+            status_ok = status_ok & !check_bus_current_error();
             // for now just always pretend everything is ok
             if (any_errors()) {
                 uint8_t e = (uint8_t) get_last_error();
                 build_board_stat_msg(millis(), E_LOGGING, &e, 1, &board_stat_msg);
-            } else {
+                txb_enqueue(&board_stat_msg);
+            } else if (status_ok) {
                 build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &board_stat_msg);
+                txb_enqueue(&board_stat_msg);
+            } else {
+                //Error message already sent by check_bus_current_error
             }
-            txb_enqueue(&board_stat_msg);
             
             last_board_status_msg = millis();
         }
