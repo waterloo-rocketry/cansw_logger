@@ -15,22 +15,20 @@
 #include <libpic30.h>
 #include <stdbool.h>
 
-static bool logger_on = 1;
+static int logger_off = -1;
+
 void can_callback_function(const can_msg_t *message)
 {
     //handle a "LED_ON" or "LED_OFF" message
     // Declare this outside of switch statement to prevent errors
     int cmd_type = -1;
     switch (get_message_type(message)) {
-        // Declare this outside of switch statement to prevent errors
-        int cmd_type = -1;
         case MSG_GENERAL_CMD:
             cmd_type = get_general_cmd_type(message);
             if (cmd_type == BUS_DOWN_WARNING) {
-                logger_on = 0;
+                logger_off = 40;
             }
             break;
-            
         case MSG_LEDS_ON:
             LED_1_ON();
             LED_2_ON();
@@ -42,7 +40,9 @@ void can_callback_function(const can_msg_t *message)
         default:
             break;
     }
-    handle_can_interrupt(message);
+    // Stops logging after BUS_DOWN_WARNING
+    if(logger_off < 0)
+        handle_can_interrupt(message);
 }
 
 static uint8_t txb_pool[100];
@@ -84,8 +84,11 @@ int main()
     uint32_t last_on_time = 0;
     uint32_t last_board_status_msg = 0;
     while (1) {
-        if(logger_on)
-            can_syslog_heartbeat();
+        can_syslog_heartbeat();
+        
+        //Don't log messages while logger_off >= 0
+        if(logger_off >= 0)
+            logger_off--;
 
         //blink blue LED at 1/3 Hz, duty cycle of 1/12
         if (millis() - last_on_time < 250) {
