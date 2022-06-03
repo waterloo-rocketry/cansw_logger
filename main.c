@@ -15,7 +15,7 @@
 #include <libpic30.h>
 #include <stdbool.h>
 
-static int logger_off = -1;
+static uint8_t logger_off = 0;
 
 void can_callback_function(const can_msg_t *message)
 {
@@ -41,7 +41,7 @@ void can_callback_function(const can_msg_t *message)
             break;
     }
     // Stops logging after BUS_DOWN_WARNING
-    if(logger_off < 0)
+    if(logger_off < 1)
         handle_can_interrupt(message);
 }
 
@@ -86,8 +86,8 @@ int main()
     while (1) {
         can_syslog_heartbeat();
         
-        //Don't log messages while logger_off >= 0
-        if(logger_off >= 0)
+        //Don't log messages while logger_off > 0
+        if(logger_off > 0)
             logger_off--;
 
         //blink blue LED at 1/3 Hz, duty cycle of 1/12
