@@ -1,7 +1,5 @@
-#ifndef CONFIG_H
-#define	CONFIG_H
 
-// DSPIC33EP256GP502 Configuration Bit Settings
+// DSPIC33EP128GP502 Configuration Bit Settings
 
 // 'C' source line config statements
 
@@ -28,7 +26,7 @@
 #pragma config FCKSM = CSECMD           // Clock Switching Mode bits (Clock switching is enabled,Fail-safe Clock Monitor is disabled)
 
 // FOSCSEL
-#pragma config FNOSC = FRCDIVN          // Oscillator Source Selection (Internal Fast RC (FRC) Oscillator with postscaler)
+#pragma config FNOSC = PRIPLL           // Oscillator Source Selection (Primary Oscillator with PLL module (XT + PLL, HS + PLL, EC + PLL))
 #pragma config IESO = ON                // Two-speed Oscillator Start-up Enable bit (Start up device with FRC, then switch to user-selected oscillator source)
 
 // FGS
@@ -40,5 +38,4 @@
 
 #include <xc.h>
 
-#endif	/* CONFIG_H */
 
