@@ -85,10 +85,6 @@ int main()
     uint32_t last_board_status_msg = 0;
     while (1) {
         can_syslog_heartbeat();
-        
-        //Don't log messages while logger_off > 0
-        if(logger_off > 0)
-            logger_off--;
 
         //blink blue LED at 1/3 Hz, duty cycle of 1/12
         if (millis() - last_on_time < 250) {
@@ -115,6 +111,9 @@ int main()
             } else {
                 //Error message already sent by check_bus_current_error
             }
+            
+            if(logger_off > 0)
+                logger_off--;
             
             last_board_status_msg = millis();
         }
