@@ -14,20 +14,16 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
         char *buffer);
 
 /* CAN logged message format:
- * NNNNNNNN III L: XX XX XX XX XX XX XX XX TTTTTTTTn
- * 1       10        20        30        40       49
- * N = a monotonically incrementing number
+ * IIIXXXXXXXXXXXXXXXXn
+ * 1       10        20
  * I = SID, 3 bytes
- * L = length, 1 byte
- * X = data, 8 bytes (always). replaced by spaces if no data present
- * T = timestamp, in microseconds. 32 bits unsigned gives us about
- *     one hour before rollover. More than enough. Probably.
+ * X = data, 2 hex characters per bytes and up to 8 bytes
  * n = newline character
  */
 
-#define MESSAGE_LENGTH_CHARS 49
-#define CAN_LOG_BUFFERS       5
-#define CAN_BUFFER_SIZE     512
+#define MESSAGE_LENGTH_CHARS 20
+#define CAN_LOG_BUFFERS       3
+#define CAN_BUFFER_SIZE     3072
 
 struct log_buffer {
     bool ready_to_log;
@@ -39,9 +35,6 @@ static struct log_buffer log_buffers[CAN_LOG_BUFFERS];
 
 //if you aren't an ISR, don't fuck with this variable
 uint8_t _log_into_index;
-
-//An incrementing number that gets prepended to every message we log
-static uint32_t message_id = 0;
 
 //public functions
 void init_can_syslog(void)
@@ -56,25 +49,14 @@ void init_can_syslog(void)
 
 void handle_can_interrupt(const can_msg_t *message)
 {
-    //move _log_into_index to the next buffer with room left in it
-    uint8_t i;
-    for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
-        if (is_can_buffer_full(_log_into_index)) {
-            log_buffers[_log_into_index].ready_to_log = true;
-            _log_into_index = ((_log_into_index + 1) % CAN_LOG_BUFFERS);
-        } else {
-            break;
-        }
-    }
-    //if we're still pointing at a full buffer, then all the buffers are full
-    if (is_can_buffer_full(_log_into_index)) {
+    //if we're pointing at a full buffer, then all the buffers are full
+    if (log_buffers[_log_into_index].ready_to_log) {
         //there's nothing we can do. Report an error and return
         error(E_SYSLOG_ALL_BUFFERS_FULL);
         return;
     } else {
         //copy the message into this buffer
         struct log_buffer *buf = &(log_buffers[_log_into_index]);
-        //TODO: replace hardcoded CAFEBABE with actual 32 bit us timestamp
         uint8_t step_ahead = can_message_to_buffer(micros(),
                              message,
                              buf->buffer + buf->buffer_index);
@@ -101,18 +83,14 @@ void force_log_everything(void)
 
 void can_syslog_heartbeat(void)
 {
-    static uint32_t time_last_buffer_logged = 0;
     uint8_t i;
     for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
-        if (log_buffers[i].ready_to_log) {
-            log_can_buffer(i);
-            time_last_buffer_logged = millis();
+        uint8_t j = (_log_into_index + i) % CAN_LOG_BUFFERS;
+        if (log_buffers[j].ready_to_log) {
             LED_2_ON();
+            log_can_buffer(j);
+            LED_2_OFF();
         }
-    }
-
-    if (millis() - time_last_buffer_logged > 100) {
-        LED_2_OFF();
     }
 }
 
@@ -133,63 +111,21 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
         'C', 'D', 'E', 'F'
     };
 
-    //write message_id into the first 8 bytes of buffer, then increment it
-    buffer[0] = nibble_to_char[(message_id >> 28) & 0xf];
-    buffer[1] = nibble_to_char[(message_id >> 24) & 0xf];
-    buffer[2] = nibble_to_char[(message_id >> 20) & 0xf];
-    buffer[3] = nibble_to_char[(message_id >> 16) & 0xf];
-    buffer[4] = nibble_to_char[(message_id >> 12) & 0xf];
-    buffer[5] = nibble_to_char[(message_id >> 8) & 0xf];
-    buffer[6] = nibble_to_char[(message_id >> 4) & 0xf];
-    buffer[7] = nibble_to_char[(message_id) & 0xf];
-    buffer[8] = ' ';
-    message_id++;
-
     //write three bytes of SID
-    buffer[9] = nibble_to_char[(message->sid >> 8) & 0xf];
-    buffer[10] = nibble_to_char[(message->sid >> 4) & 0xf];
-    buffer[11] = nibble_to_char[message->sid & 0xf];
+    buffer[0] = nibble_to_char[(message->sid >> 8) & 0xf];
+    buffer[1] = nibble_to_char[(message->sid >> 4) & 0xf];
+    buffer[2] = nibble_to_char[message->sid & 0xf];
 
-    //write a space, then the length, then a colon
-    buffer[12] = ' ';
-    buffer[13] = nibble_to_char[message->data_len & 0xf];
-    buffer[14] = ':';
-
-    //write a space, then the data
-    buffer[15] = ' ';
+    //write the data
     uint8_t i;
-    for (i = 0; i < 8; ++i) {
-        if (message->data_len >= (8 - i)) {
-            //I am so sorry.
-            buffer[16 + 3 * i] = nibble_to_char[(message->data[message->data_len - 8 + i] >>
-                                                 4) & 0xf];
-            buffer[16 + 3 * i + 1] = nibble_to_char[message->data[message->data_len - 8 + i]
-                                                    & 0xf];
-        } else {
-            //no data to write, put a blank
-            buffer[16 + 3 * i] = ' ';
-            buffer[16 + 3 * i + 1] = ' ';
-        }
-        //write a space following the data
-        buffer[16 + 3 * i + 2] = ' ';
+    for (i = 0; i < message->data_len; ++i) {
+        buffer[3 + 2 * i] = nibble_to_char[(message->data[i] >> 4) & 0xf];
+        buffer[3 + 2 * i + 1] = nibble_to_char[message->data[i] & 0xf];
     }
-
-    //write the timestamp. Max index the for loop will write to is
-    //6+3*7+2 = 30, so we start at 31.
-    buffer[40] = nibble_to_char[(timestamp >> 28) & 0xf];
-    buffer[41] = nibble_to_char[(timestamp >> 24) & 0xf];
-    buffer[42] = nibble_to_char[(timestamp >> 20) & 0xf];
-    buffer[43] = nibble_to_char[(timestamp >> 16) & 0xf];
-    buffer[44] = nibble_to_char[(timestamp >> 12) & 0xf];
-    buffer[45] = nibble_to_char[(timestamp >>  8) & 0xf];
-    buffer[46] = nibble_to_char[(timestamp >>  4) & 0xf];
-    buffer[47] = nibble_to_char[(timestamp >>  0) & 0xf];
-
-    // then the newline character
-    buffer[48] = '\n';
-
-    //return the length of string we just wrote. So a hardcoded 49
-    return 49;
+    buffer[3 + 2 * i] = '\n';
+            
+    //return the length of string we just wrote.
+    return 3 + 2 * i + 1;
 }
 
 /*
@@ -201,6 +137,9 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp,
 static void log_can_buffer(uint8_t index)
 {
     if (index >= CAN_LOG_BUFFERS) {
+        return;
+    }
+    if (log_buffers[index].buffer_index == 0) {
         return;
     }
     sd_card_log_to_file(log_buffers[index].buffer,

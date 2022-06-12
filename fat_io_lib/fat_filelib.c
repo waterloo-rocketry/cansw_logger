@@ -1288,7 +1288,9 @@ int fl_fwrite(const void * data, int size, int count, void *f )
     while (bytesWritten < length)
     {
         // Whole sector or more to be written?
-        if ((offset == 0) && ((length - bytesWritten) >= FAT_SECTOR_SIZE))
+        // Disable this option because it doesn't work and corrupts sectors
+        // Instead just fallback as if we are writing < a sector and do it multiple times, still all works
+        if (0 && (offset == 0) && ((length - bytesWritten) >= FAT_SECTOR_SIZE))
         {
             uint32 sectorsWrote;
 

@@ -17,9 +17,9 @@
 
 void can_callback_function(const can_msg_t *message)
 {
-    //handle a "LED_ON" or "LED_OFF" message
     int dest_id = get_reset_board_id(message);
 
+    //handle a "LED_ON" or "LED_OFF" message
     switch (get_message_type(message)) {
         case MSG_LEDS_ON:
             LED_1_ON();
@@ -108,6 +108,11 @@ int main()
             }
             
             last_board_status_msg = millis();
+        }
+        
+        if (millis() > 300000) {
+            // Switch to a new log file to stop slowing down due to bookkeeping
+            __asm__ volatile ("reset");
         }
 
         txb_heartbeat();
