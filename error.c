@@ -13,6 +13,7 @@ void error(cansw_logger_error_t error)
 
 cansw_logger_error_t get_last_error(void)
 {
+    any_errors_happened = false;
     return last_error;
 }
 
