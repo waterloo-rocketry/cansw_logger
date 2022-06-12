@@ -18,6 +18,8 @@
 void can_callback_function(const can_msg_t *message)
 {
     //handle a "LED_ON" or "LED_OFF" message
+    int dest_id = get_reset_board_id(message);
+
     switch (get_message_type(message)) {
         case MSG_LEDS_ON:
             LED_1_ON();
@@ -26,6 +28,11 @@ void can_callback_function(const can_msg_t *message)
         case MSG_LEDS_OFF:
             LED_1_OFF();
             LED_2_OFF();
+            break;
+        case MSG_RESET_CMD:
+            if(dest_id == BOARD_UNIQUE_ID || dest_id == 0 ) {
+                __asm__ volatile ("reset");
+            }
             break;
         default:
             break;
