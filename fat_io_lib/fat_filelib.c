@@ -869,7 +869,8 @@ static uint32 _write_sectors(FL_FILE* file, uint32 offset, uint8 *buf, uint32 co
         if (Cluster == FAT32_LAST_CLUSTER)
         {
             // Add some more cluster(s) to the last good cluster chain
-            if (!fatfs_add_free_space(&_fs, &LastCluster,  (TotalWriteCount + _fs.sectors_per_cluster -1) / _fs.sectors_per_cluster))
+            // extra +100 added by us for efficiency, it's much faster to allocate a bunch in a row
+            if (!fatfs_add_free_space(&_fs, &LastCluster,  (TotalWriteCount + 100 + _fs.sectors_per_cluster -1) / _fs.sectors_per_cluster))
                 return 0;
 
             Cluster = LastCluster;
@@ -1335,8 +1336,9 @@ int fl_fwrite(const void * data, int size, int count, void *f )
             if (file->file_data_address != sector)
             {
                 // Flush un-written data to file
-                if (file->file_data_dirty)
+                if (file->file_data_dirty) {
                     fl_fflush(file);
+                }
 
                 // If we plan to overwrite the whole sector, we don't need to read it first!
                 if (copyCount != FAT_SECTOR_SIZE)

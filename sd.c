@@ -181,6 +181,7 @@ int media_write(unsigned long sector,
 
 void sd_card_log_to_file(const char *buffer, uint16_t length)
 {
+    LED_2_ON();
     FL_FILE *file = fl_fopen(GLOBAL_FILENAME, "a");
     if (!file) {
         error(E_SD_FAIL_OPEN_FILE);
@@ -192,6 +193,7 @@ void sd_card_log_to_file(const char *buffer, uint16_t length)
     }
 
     fl_fclose(file);
+    LED_2_OFF();
 }
 
 uint8_t init_sd_card2()
