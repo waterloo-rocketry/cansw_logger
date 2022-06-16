@@ -51,12 +51,15 @@ int fatfs_add_free_space(struct fatfs *fs, uint32 *startCluster, uint32 clusters
     // Set the next free cluster hint to unknown
     if (fs->next_free_cluster != FAT32_LAST_CLUSTER)
         fatfs_set_fs_info_next_free_cluster(fs, FAT32_LAST_CLUSTER);
+    
+    uint32 free_search_start_cluster = fs->rootdir_first_cluster;
 
     for (i=0;i<clusters;i++)
     {
         // Start looking for free clusters from the beginning
-        if (fatfs_find_blank_cluster(fs, fs->rootdir_first_cluster, &nextcluster))
+        if (fatfs_find_blank_cluster(fs, free_search_start_cluster, &nextcluster))
         {
+            free_search_start_cluster = nextcluster;
             // Point last to this
             fatfs_fat_set_cluster(fs, start, nextcluster);
 

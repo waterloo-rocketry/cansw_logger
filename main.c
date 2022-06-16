@@ -109,11 +109,6 @@ int main()
             
             last_board_status_msg = millis();
         }
-        
-        if (millis() > 300000) {
-            // Switch to a new log file to stop slowing down due to bookkeeping
-            __asm__ volatile ("reset");
-        }
 
         txb_heartbeat();
     }
