@@ -13,14 +13,24 @@
 #include "adc1.h"
 #include <string.h>
 #include <libpic30.h>
+#include <stdbool.h>
 
+static uint8_t logger_off = 0;
 
 void can_callback_function(const can_msg_t *message)
 {
     int dest_id = get_reset_board_id(message);
 
     //handle a "LED_ON" or "LED_OFF" message
+    // Declare this outside of switch statement to prevent errors
+    int cmd_type = -1;
     switch (get_message_type(message)) {
+        case MSG_GENERAL_CMD:
+            cmd_type = get_general_cmd_type(message);
+            if (cmd_type == BUS_DOWN_WARNING) {
+                logger_off = 40;
+            }
+            break;
         case MSG_LEDS_ON:
             LED_1_ON();
             LED_2_ON();
@@ -37,7 +47,9 @@ void can_callback_function(const can_msg_t *message)
         default:
             break;
     }
-    handle_can_interrupt(message);
+    // Stops logging after BUS_DOWN_WARNING
+    if(logger_off < 1)
+        handle_can_interrupt(message);
 }
 
 static uint8_t txb_pool[100];
@@ -106,6 +118,9 @@ int main()
             } else {
                 //Error message already sent by check_bus_current_error
             }
+            
+            if(logger_off > 0)
+                logger_off--;
             
             last_board_status_msg = millis();
         }
