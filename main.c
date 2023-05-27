@@ -15,10 +15,14 @@
 #include <libpic30.h>
 #include <stdbool.h>
 
+#define MAX_BUS_DEAD_TIME_ms 1000
+
 static uint8_t logger_off = 0;
+uint32_t last_message_millis = 0;
 
 void can_callback_function(const can_msg_t *message)
 {
+    last_message_millis = millis();
     int dest_id = get_reset_board_id(message);
 
     //handle a "LED_ON" or "LED_OFF" message
@@ -91,7 +95,19 @@ int main()
     uint32_t last_on_time = 0;
     uint32_t last_board_status_msg = 0;
     while (1) {
+        // clear watchdog timer
+        ClrWdt();
+        
         can_syslog_heartbeat();
+        
+         uint32_t dt = millis() - last_message_millis;
+        // prevent race condition where last_message_millis is greater than millis
+        // by checking for overflow
+        if (dt > MAX_BUS_DEAD_TIME_ms && dt < (1 << 15)) {
+            // We've got too long without seeing a valid CAN message (including one of ours)
+            __asm__ volatile ("reset");
+        }
+        
 
         //blink blue LED at 1/3 Hz, duty cycle of 1/12
         if (millis() - last_on_time < 250) {
