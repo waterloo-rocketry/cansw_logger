@@ -18,11 +18,11 @@
 #define MAX_BUS_DEAD_TIME_ms 1000
 
 static uint8_t logger_off = 0;
-uint32_t last_message_millis = 0;
+volatile bool seen_can_message = false;
 
 void can_callback_function(const can_msg_t *message)
 {
-    last_message_millis = millis();
+    seen_can_message = true;
     int dest_id = get_reset_board_id(message);
 
     //handle a "LED_ON" or "LED_OFF" message
@@ -94,16 +94,19 @@ int main()
 
     uint32_t last_on_time = 0;
     uint32_t last_board_status_msg = 0;
+    uint32_t last_message_time = 0;
     while (1) {
         // clear watchdog timer
         ClrWdt();
         
         can_syslog_heartbeat();
         
-         uint32_t dt = millis() - last_message_millis;
-        // prevent race condition where last_message_millis is greater than millis
-        // by checking for overflow
-        if (dt > MAX_BUS_DEAD_TIME_ms && dt < (1 << 15)) {
+        if (seen_can_message) {
+            seen_can_message = false;
+            last_message_time = millis();
+        }
+        
+        if (millis() - last_message_time > MAX_BUS_DEAD_TIME_ms) {
             // We've got too long without seeing a valid CAN message (including one of ours)
             __asm__ volatile ("reset");
         }
