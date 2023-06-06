@@ -18,5 +18,7 @@ uint32_t millis()
  */
 uint32_t micros()
 {
-    return (((uint32_t)TMR3) << 17) | (((uint32_t)TMR2) << 1);
+    uint32_t lsw = TMR2;
+    uint32_t msw = TMR3HLD;
+    return (msw << 17) | (lsw << 1);
 }

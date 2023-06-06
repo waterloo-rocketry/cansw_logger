@@ -45,6 +45,7 @@ void can_callback_function(const can_msg_t *message)
             break;
         case MSG_RESET_CMD:
             if(dest_id == BOARD_UNIQUE_ID || dest_id == 0 ) {
+                while (1);
                 __asm__ volatile ("reset");
             }
             break;
@@ -91,8 +92,10 @@ int main()
 
     //turn on the white LED to show that initialization has succeeded
     LED_2_ON();
-
-    uint32_t last_on_time = 0;
+    
+    bool led_on = false;
+    uint32_t last_blink_time = 0;
+    
     uint32_t last_board_status_msg = 0;
     uint32_t last_message_time = 0;
     while (1) {
@@ -108,17 +111,20 @@ int main()
         
         if (millis() - last_message_time > MAX_BUS_DEAD_TIME_ms) {
             // We've got too long without seeing a valid CAN message (including one of ours)
+            while (1);
             __asm__ volatile ("reset");
         }
         
 
         //blink blue LED at 1/3 Hz, duty cycle of 1/12
-        if (millis() - last_on_time < 250) {
-            LED_1_ON();
-        } else if (millis() - last_on_time < 3000) {
-            LED_1_OFF();
-        } else {
-            last_on_time = millis();
+        if (millis() - last_blink_time > 500) {
+            led_on = !led_on;
+            if (led_on) {
+                LED_1_ON();
+            } else {
+                LED_1_OFF();
+            }
+            last_blink_time = millis();
         }
 
         //give status update
