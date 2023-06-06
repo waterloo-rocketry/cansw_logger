@@ -45,7 +45,6 @@ void can_callback_function(const can_msg_t *message)
             break;
         case MSG_RESET_CMD:
             if(dest_id == BOARD_UNIQUE_ID || dest_id == 0 ) {
-                while (1);
                 __asm__ volatile ("reset");
             }
             break;
@@ -111,7 +110,6 @@ int main()
         
         if (millis() - last_message_time > MAX_BUS_DEAD_TIME_ms) {
             // We've got too long without seeing a valid CAN message (including one of ours)
-            while (1);
             __asm__ volatile ("reset");
         }
         
