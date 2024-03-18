@@ -33,10 +33,10 @@ void init_oscillator()
     //divide input frequency (12MHz) by 3 to get 4MHz
     CLKDIVbits.PLLPRE = 0x01;
 
-    //multiply the 4MHz by 64 to get 256MHz
-    PLLFBDbits.PLLDIV = 62;
+    //multiply the 4MHz by 96 to get 384MHz
+    PLLFBDbits.PLLDIV = 94;
 
-    //divide the 256MHz by 4 to get a 64M Fosc
+    //divide the 384MHz by 4 to get a 96M Fosc
     CLKDIVbits.PLLPOST = 0x01;
 
     //disable clock dozing, because we currently don't care about power draw

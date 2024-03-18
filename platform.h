@@ -1,7 +1,7 @@
 #ifndef PLATFORM_H
 #define	PLATFORM_H
 
-#define FCY 32000000
+#define FCY 48000000
 
 #include <xc.h>
 
