@@ -10,7 +10,7 @@ static char GLOBAL_FILENAME[20];
 void sd_card_log_to_file(const char *buffer, uint16_t length) {
     LED_GREEN_ON();
     FIL file;
-    if (f_open(&file, GLOBAL_FILENAME, FA_OPEN_APPEND) != FR_OK) {
+    if (f_open(&file, GLOBAL_FILENAME, FA_WRITE | FA_OPEN_APPEND) != FR_OK) {
         error(E_SD_FAIL_OPEN_FILE);
     }
 
@@ -36,14 +36,15 @@ uint8_t init_fs() {
     }
 
     FILINFO finfo;
-    while (f_readdir(&dir, &finfo) == FR_OK) {
+    while (f_readdir(&dir, &finfo) == FR_OK && finfo.fname[0] != '\0') {
         root_dir_files++;
     }
+    f_closedir(&dir);
 
-    sprintf(GLOBAL_FILENAME, "/log_%04x.txt", root_dir_files);
+    sprintf(GLOBAL_FILENAME, "log_%04x.txt", root_dir_files);
 
     FIL file;
-    if (f_open(&file, GLOBAL_FILENAME, FA_WRITE) != FR_OK) {
+    if (f_open(&file, GLOBAL_FILENAME, FA_WRITE | FA_CREATE_NEW) != FR_OK) {
         error(E_SD_FAIL_READ_FILE);
     }
 

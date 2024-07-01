@@ -1,7 +1,7 @@
 #include "platform.h"
 
 uint32_t millis(void) {
-    return 0;
+    return HAL_GetTick();
 }
 
 uint32_t micros(void) {

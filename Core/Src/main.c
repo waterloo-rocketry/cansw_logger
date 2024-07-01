@@ -153,11 +153,11 @@ int main(void)
   init_fs();
   can_init_stm(&hfdcan1, can_callback_function);
 
-    bool led_on = false;
-    uint32_t last_blink_time = 0;
-    
-    uint32_t last_board_status_msg = 0;
-    uint32_t last_message_time = 0;
+  bool led_on = false;
+  uint32_t last_blink_time = 0;
+
+  uint32_t last_board_status_msg = 0;
+  uint32_t last_message_time = 0;
   
   /* USER CODE END 2 */
 
@@ -165,7 +165,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
         //lrWdt();
         
         can_syslog_heartbeat();
@@ -214,6 +213,8 @@ int main(void)
             
             last_board_status_msg = millis();
         }
+
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -420,7 +421,7 @@ static void MX_SDMMC2_SD_Init(void)
   hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
   hsd2.Init.BusWide = SDMMC_BUS_WIDE_4B;
   hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd2.Init.ClockDiv = 1;
+  hsd2.Init.ClockDiv = 4;
   /* USER CODE BEGIN SDMMC2_Init 2 */
 
   /* USER CODE END SDMMC2_Init 2 */
