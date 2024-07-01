@@ -7,6 +7,8 @@
 
 static char GLOBAL_FILENAME[20];
 
+FATFS fatfs;
+
 void sd_card_log_to_file(const char *buffer, uint16_t length) {
     LED_GREEN_ON();
     FIL file;
@@ -25,7 +27,6 @@ void sd_card_log_to_file(const char *buffer, uint16_t length) {
 }
 
 uint8_t init_fs() {
-	FATFS fatfs;
 	f_mount(&fatfs, "", 0);
 
     // count the number of flies in the root directory of the SD card
