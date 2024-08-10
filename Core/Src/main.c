@@ -204,7 +204,6 @@ int main(void)
             bool status_ok = true; //t
             status_ok = status_ok & !check_bus_current_error();
 			status_ok = status_ok & !check_bus_voltage_error();
-            // for now just always pretend everything is ok
             if (any_errors()) {
                 uint8_t e = (uint8_t) get_last_error();
                 build_board_stat_msg(millis(), E_LOGGING, &e, 1, &board_stat_msg);

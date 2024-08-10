@@ -19,7 +19,7 @@ extern ADC_HandleTypeDef hadc2;
 
 bool check_bus_current_error(void) {
     HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, 1000);
+    HAL_ADC_PollForConversion(&hadc1, 500);
     uint16_t adcval = HAL_ADC_GetValue(&hadc1); // 12-bit ADC
     uint16_t battery_current_mA = adcval * BATT_CURR_SCALAR_TIMES / BATT_CURR_SCALAR_DIV;
 
@@ -41,7 +41,7 @@ bool check_bus_current_error(void) {
 
 bool check_bus_voltage_error(void) {
     HAL_ADC_Start(&hadc2);
-    HAL_ADC_PollForConversion(&hadc2, 1000);
+    HAL_ADC_PollForConversion(&hadc2, 500);
     uint16_t adcval = HAL_ADC_GetValue(&hadc2); // 12-bit ADC
     uint16_t battery_voltage_mV = adcval * BATT_VOLT_SCALAR_TIMES / BATT_VOLT_SCALAR_DIV;
 
