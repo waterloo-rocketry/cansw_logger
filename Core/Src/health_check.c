@@ -30,7 +30,7 @@ bool check_bus_current_error(void) {
         curr_data[1] = (battery_current_mA >> 0) & 0xff;
 
         can_msg_t error_msg;
-        build_board_stat_msg(timestamp, E_BATT_OVER_CURRENT, curr_data, 2, &error_msg);
+        build_general_board_status_msg(PRIO_MEDIUM, timestamp, E_12V_OVER_CURRENT, 0, &error_msg);
         can_send(&error_msg);
 
         return true;
@@ -52,7 +52,7 @@ bool check_bus_voltage_error(void) {
         volt_data[1] = (battery_voltage_mV >> 0) & 0xff;
 
         can_msg_t error_msg;
-        build_board_stat_msg(timestamp, E_BATT_OVER_VOLTAGE, volt_data, 2, &error_msg);
+        build_general_board_status_msg(PRIO_MEDIUM, timestamp, E_12V_OVER_VOLTAGE, 0, &error_msg);
         can_send(&error_msg);
 
         return true;
@@ -65,7 +65,7 @@ bool check_bus_voltage_error(void) {
         volt_data[1] = (battery_voltage_mV >> 0) & 0xff;
 
         can_msg_t error_msg;
-        build_board_stat_msg(timestamp, E_BATT_UNDER_VOLTAGE, volt_data, 2, &error_msg);
+        build_general_board_status_msg(PRIO_MEDIUM, timestamp, E_12V_UNDER_VOLTAGE, 0, &error_msg);
         can_send(&error_msg);
 
         return true;
