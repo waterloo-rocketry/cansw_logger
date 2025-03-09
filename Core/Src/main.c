@@ -192,30 +192,8 @@ int main(void)
 
         //give status update
         if (millis() - last_board_status_msg > 500) {
-            can_msg_t board_stat_msg;
-            bool status_ok = true; //t
-            status_ok = status_ok & !check_bus_current_error();
-			status_ok = status_ok & !check_bus_voltage_error();
-
-
-			               build_general_board_status_msg(PRIO_MEDIUM, millis(), 0, 0, &board_stat_msg);
-                can_send(&board_stat_msg);
-				
-            if (any_errors()) {
-                //uint8_t e = (uint8_t) get_last_error();
-                //build_board_stat_msg(millis(), E_LOGGING, &e, 1, &board_stat_msg);
-                //can_send(&board_stat_msg);
-            } else if (status_ok) {
-                build_general_board_status_msg(PRIO_MEDIUM, millis(), 0, 0, &board_stat_msg);
-                can_send(&board_stat_msg);
-            } else {
-                //Error message already sent by check_bus_current_error
-            }
-            
-            if(logger_off > 0)
-                logger_off--;
-            
-            last_board_status_msg = millis();
+			last_board_status_msg = millis();
+            health_check();
         }
 
     /* USER CODE END WHILE */

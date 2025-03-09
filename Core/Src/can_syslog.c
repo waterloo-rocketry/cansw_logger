@@ -9,18 +9,18 @@
 // private functions
 static void log_can_buffer(uint8_t index);
 static bool is_can_buffer_full(uint8_t index);
-static uint_fast8_t can_message_to_buffer(uint32_t timestamp, const can_msg_t *message,
-                                          char *buffer);
+static uint_fast8_t
+can_message_to_buffer(uint32_t timestamp, const can_msg_t *message, char *buffer);
 
 /* CAN logged message format:
- * IIIXXXXXXXXXXXXXXXXn
+ * IIIIIIIIXXXXXXXXXXXXXXXXn
  * 1       10        20
- * I = SID, 3 bytes
+ * I = SID, 8 bytes
  * X = data, 2 hex characters per bytes and up to 8 bytes
  * n = newline character
  */
 
-#define MESSAGE_LENGTH_CHARS 20
+#define MESSAGE_LENGTH_CHARS (8 + 16 + 1)
 #define CAN_LOG_BUFFERS 3
 #define CAN_BUFFER_SIZE 3072
 
@@ -94,26 +94,27 @@ void can_syslog_heartbeat(void) {
  * it, the caller is responsible for making sure that there is at
  * least that much memory available
  */
-static uint_fast8_t can_message_to_buffer(uint32_t timestamp, const can_msg_t *message,
-                                          char *buffer) {
+static uint_fast8_t
+can_message_to_buffer(uint32_t timestamp, const can_msg_t *message, char *buffer) {
     const char nibble_to_char[] = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+    };
 
     // write three bytes of SID
-    buffer[0] = nibble_to_char[(message->sid >> 8) & 0xf];
-    buffer[1] = nibble_to_char[(message->sid >> 4) & 0xf];
-    buffer[2] = nibble_to_char[message->sid & 0xf];
+    for (int i = 0; i < 8; i++) {
+        buffer[i] = nibble_to_char[(message->sid >> (28 - i * 4)) & 0xf];
+    }
 
     // write the data
     uint8_t i;
     for (i = 0; i < message->data_len; ++i) {
-        buffer[3 + 2 * i] = nibble_to_char[(message->data[i] >> 4) & 0xf];
-        buffer[3 + 2 * i + 1] = nibble_to_char[message->data[i] & 0xf];
+        buffer[8 + 2 * i] = nibble_to_char[(message->data[i] >> 4) & 0xf];
+        buffer[8 + 2 * i + 1] = nibble_to_char[message->data[i] & 0xf];
     }
-    buffer[3 + 2 * i] = '\n';
+    buffer[8 + 2 * i] = '\n';
 
     // return the length of string we just wrote.
-    return 3 + 2 * i + 1;
+    return 8 + 2 * i + 1;
 }
 
 /*
