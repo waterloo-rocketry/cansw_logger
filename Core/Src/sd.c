@@ -27,7 +27,7 @@ void sd_card_log_to_file(const char *buffer, uint16_t length) {
 }
 
 uint8_t init_fs() {
-	f_mount(&fatfs, "", 0);
+    f_mount(&fatfs, "", 0);
 
     // count the number of flies in the root directory of the SD card
     uint16_t root_dir_files = 0;
