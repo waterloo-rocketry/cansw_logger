@@ -1,0 +1,19 @@
+name: C Coding Style Check
+
+# Runs on pushes to pull request
+on: pull_request
+
+jobs:
+  clang-format-style-check:
+    name: C Coding Style Check (clang-format check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Run formatting check
+        uses: waterloo-rocketry/actions/clang-format-check@main
+        with:
+          clang-format-config-path: 'rocketlib/.clang-format'
+          c-source-files: 'Core/Src/can_syslog.h Core/Src/can_syslog.c Core/Src/error.h Core/Src/error.c Core/Src/health_check.h Core/Src/health_check.c Core/Src/platform.h Core/Src/sd.h Core/Src/sd.c'
