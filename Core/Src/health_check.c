@@ -29,7 +29,7 @@ void health_check(void) {
     uint16_t battery_current_mA = adcval * BATT_CURR_SCALAR_TIMES / BATT_CURR_SCALAR_DIV;
 
     if (battery_current_mA > BATTERY_CURRENT_THRESHOLD) {
-        status_msg_general_status |= E_12V_OVER_CURRENT;
+        status_msg_general_status |= (1 << E_12V_OVER_CURRENT_OFFSET);
     }
 
     build_analog_data_msg(PRIO_LOW, millis(), SENSOR_12V_CURR, battery_current_mA, &msg);
@@ -42,11 +42,11 @@ void health_check(void) {
     uint16_t battery_voltage_mV = adcval * BATT_VOLT_SCALAR_TIMES / BATT_VOLT_SCALAR_DIV;
 
     if (battery_voltage_mV > BATT_VOLT_HIGH_THRESHOLD) {
-        status_msg_general_status |= E_12V_OVER_VOLTAGE;
+        status_msg_general_status |= (1 << E_12V_OVER_VOLTAGE_OFFSET);
     }
 
     if (battery_voltage_mV < BATT_VOLT_LOW_THRESHOLD) {
-        status_msg_general_status |= E_12V_UNDER_VOLTAGE;
+        status_msg_general_status |= (1 << E_12V_UNDER_VOLTAGE_OFFSET);
     }
 
     build_analog_data_msg(PRIO_LOW, millis(), SENSOR_12V_VOLT, battery_voltage_mV, &msg);
