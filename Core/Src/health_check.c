@@ -52,8 +52,7 @@ void health_check(void) {
     build_analog_data_msg(PRIO_LOW, millis(), SENSOR_12V_VOLT, battery_voltage_mV, &msg);
     can_send(&msg);
 
-    for (volatile int i = 0; i < 100000; i++) {
-    } // FIXME workaround to prevent sending message too fast
+    HAL_Delay(1); // FIXME workaround to prevent sending message too fast
 
     build_general_board_status_msg(PRIO_MEDIUM, millis(), status_msg_general_status, 0, &msg);
     can_send(&msg);
