@@ -178,14 +178,12 @@ int main(void)
             NVIC_SystemReset();
         }
         
-
-        //blink blue LED at 1/3 Hz, duty cycle of 1/12
         if (millis() - last_blink_time > 500) {
             led_on = !led_on;
             if (led_on) {
-                LED_RED_ON();
+                LED_GREEN_ON();
             } else {
-                LED_RED_OFF();
+                LED_GREEN_OFF();
             }
             last_blink_time = millis();
         }

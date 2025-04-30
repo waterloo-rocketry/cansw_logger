@@ -14,9 +14,4 @@ static inline uint32_t millis(void) {
     return HAL_GetTick();
 };
 
-// number of microseconds since bootup
-static inline uint32_t micros(void) {
-    return 0;
-}
-
 #endif /* PLATFORM_H */

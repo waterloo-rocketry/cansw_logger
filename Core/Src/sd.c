@@ -10,7 +10,6 @@ static char GLOBAL_FILENAME[20];
 FATFS fatfs;
 
 void sd_card_log_to_file(const char *buffer, uint16_t length) {
-    LED_GREEN_ON();
     FIL file;
     if (f_open(&file, GLOBAL_FILENAME, FA_WRITE | FA_OPEN_APPEND) != FR_OK) {
         error(E_SD_FAIL_OPEN_FILE);
@@ -23,7 +22,6 @@ void sd_card_log_to_file(const char *buffer, uint16_t length) {
     }
 
     f_close(&file);
-    LED_GREEN_OFF();
 }
 
 uint8_t init_fs() {
