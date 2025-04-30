@@ -10,8 +10,8 @@
 #define LED_GREEN_OFF() (HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET))
 
 // number of milliseconds since bootup
-uint32_t millis(void);
-// number of microseconds since bootup
-uint32_t micros(void);
+static inline uint32_t millis(void) {
+    return HAL_GetTick();
+};
 
 #endif /* PLATFORM_H */

@@ -80,18 +80,10 @@ volatile bool seen_can_message = false;
 void can_callback_function(const can_msg_t *message, uint32_t)
 {
     seen_can_message = true;
-    int dest_id = get_reset_board_id(message);
 
     //handle a "LED_ON" or "LED_OFF" message
     // Declare this outside of switch statement to prevent errors
-    int cmd_type = -1;
     switch (get_message_type(message)) {
-        case MSG_GENERAL_CMD:
-            cmd_type = get_general_cmd_type(message);
-            if (cmd_type == BUS_DOWN_WARNING) {
-                logger_off = 40;
-            }
-            break;
         case MSG_LEDS_ON:
             LED_RED_ON();
             LED_GREEN_ON();
@@ -101,8 +93,8 @@ void can_callback_function(const can_msg_t *message, uint32_t)
             LED_GREEN_OFF();
             break;
         case MSG_RESET_CMD:
-            if(dest_id == BOARD_UNIQUE_ID || dest_id == 0 ) {
-                //__asm__ volatile ("reset");
+            if(check_board_need_reset(message)) {
+                NVIC_SystemReset();
             }
             break;
         default:
@@ -141,7 +133,7 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-/* Configure the peripherals common clocks */
+  /* Configure the peripherals common clocks */
   PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
@@ -183,42 +175,23 @@ int main(void)
         
         if (millis() - last_message_time > MAX_BUS_DEAD_TIME_ms) {
             // We've got too long without seeing a valid CAN message (including one of ours)
-            //__asm__ volatile ("reset");
+            NVIC_SystemReset();
         }
         
-
-        //blink blue LED at 1/3 Hz, duty cycle of 1/12
         if (millis() - last_blink_time > 500) {
             led_on = !led_on;
             if (led_on) {
-                LED_RED_ON();
+                LED_GREEN_ON();
             } else {
-                LED_RED_OFF();
+                LED_GREEN_OFF();
             }
             last_blink_time = millis();
         }
 
         //give status update
         if (millis() - last_board_status_msg > 500) {
-            can_msg_t board_stat_msg;
-            bool status_ok = true; //t
-            status_ok = status_ok & !check_bus_current_error();
-			status_ok = status_ok & !check_bus_voltage_error();
-            if (any_errors()) {
-                uint8_t e = (uint8_t) get_last_error();
-                build_board_stat_msg(millis(), E_LOGGING, &e, 1, &board_stat_msg);
-                can_send(&board_stat_msg);
-            } else if (status_ok) {
-                build_board_stat_msg(millis(), E_NOMINAL, NULL, 0, &board_stat_msg);
-                can_send(&board_stat_msg);
-            } else {
-                //Error message already sent by check_bus_current_error
-            }
-            
-            if(logger_off > 0)
-                logger_off--;
-            
-            last_board_status_msg = millis();
+			last_board_status_msg = millis();
+            health_check();
         }
 
     /* USER CODE END WHILE */
@@ -256,13 +229,13 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 9;
+  RCC_OscInitStruct.PLL.PLLN = 24;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 3;
+  RCC_OscInitStruct.PLL.PLLQ = 8;
   RCC_OscInitStruct.PLL.PLLR = 2;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
-  RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOMEDIUM;
-  RCC_OscInitStruct.PLL.PLLFRACN = 3072;
+  RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
+  RCC_OscInitStruct.PLL.PLLFRACN = 0;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -299,13 +272,13 @@ void PeriphCommonClock_Config(void)
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC;
   PeriphClkInitStruct.PLL2.PLL2M = 4;
-  PeriphClkInitStruct.PLL2.PLL2N = 9;
+  PeriphClkInitStruct.PLL2.PLL2N = 10;
   PeriphClkInitStruct.PLL2.PLL2P = 2;
   PeriphClkInitStruct.PLL2.PLL2Q = 2;
   PeriphClkInitStruct.PLL2.PLL2R = 2;
   PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
   PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOMEDIUM;
-  PeriphClkInitStruct.PLL2.PLL2FRACN = 3072;
+  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
   PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
@@ -349,6 +322,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
   hadc1.Init.OversamplingMode = DISABLE;
+  hadc1.Init.Oversampling.Ratio = 1;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -416,6 +390,7 @@ static void MX_ADC2_Init(void)
   hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc2.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
   hadc2.Init.OversamplingMode = DISABLE;
+  hadc2.Init.Oversampling.Ratio = 1;
   if (HAL_ADC_Init(&hadc2) != HAL_OK)
   {
     Error_Handler();
@@ -461,10 +436,10 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.AutoRetransmission = DISABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 40;
+  hfdcan1.Init.NominalPrescaler = 64;
   hfdcan1.Init.NominalSyncJumpWidth = 1;
-  hfdcan1.Init.NominalTimeSeg1 = 2;
-  hfdcan1.Init.NominalTimeSeg2 = 2;
+  hfdcan1.Init.NominalTimeSeg1 = 1;
+  hfdcan1.Init.NominalTimeSeg2 = 1;
   hfdcan1.Init.DataPrescaler = 1;
   hfdcan1.Init.DataSyncJumpWidth = 1;
   hfdcan1.Init.DataTimeSeg1 = 1;

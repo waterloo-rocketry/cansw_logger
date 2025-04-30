@@ -9,20 +9,22 @@
 // private functions
 static void log_can_buffer(uint8_t index);
 static bool is_can_buffer_full(uint8_t index);
-static uint_fast8_t can_message_to_buffer(uint32_t timestamp, const can_msg_t *message,
-                                          char *buffer);
+static uint_fast8_t
+can_message_to_buffer(uint32_t timestamp, const can_msg_t *message, char *buffer);
 
 /* CAN logged message format:
- * IIIXXXXXXXXXXXXXXXXn
- * 1       10        20
- * I = SID, 3 bytes
+ * TTTTTTTTIIIIIIIIXXXXXXXXXXXXXXXXn
+ * |         |         |         |
+ * 0        10        20        30
+ * T = Timestamp when received CAN message, 8 bytes
+ * I = SID, 8 bytes
  * X = data, 2 hex characters per bytes and up to 8 bytes
  * n = newline character
  */
 
-#define MESSAGE_LENGTH_CHARS 20
-#define CAN_LOG_BUFFERS 3
-#define CAN_BUFFER_SIZE 3072
+#define MESSAGE_LENGTH_CHARS (8 + 8 + 16 + 1)
+#define CAN_LOG_BUFFERS 4
+#define CAN_BUFFER_SIZE 4096
 
 struct log_buffer {
     bool ready_to_log;
@@ -55,7 +57,7 @@ void handle_can_interrupt(const can_msg_t *message) {
         // copy the message into this buffer
         struct log_buffer *buf = &(log_buffers[_log_into_index]);
         uint8_t step_ahead =
-            can_message_to_buffer(micros(), message, buf->buffer + buf->buffer_index);
+            can_message_to_buffer(millis(), message, buf->buffer + buf->buffer_index);
         buf->buffer_index += step_ahead;
         // check if that caused the buffer to become full
         if (is_can_buffer_full(_log_into_index)) {
@@ -81,9 +83,7 @@ void can_syslog_heartbeat(void) {
     for (i = 0; i < CAN_LOG_BUFFERS; ++i) {
         uint8_t j = (_log_into_index + i) % CAN_LOG_BUFFERS;
         if (log_buffers[j].ready_to_log) {
-            LED_GREEN_ON();
             log_can_buffer(j);
-            LED_GREEN_OFF();
         }
     }
 }
@@ -94,26 +94,32 @@ void can_syslog_heartbeat(void) {
  * it, the caller is responsible for making sure that there is at
  * least that much memory available
  */
-static uint_fast8_t can_message_to_buffer(uint32_t timestamp, const can_msg_t *message,
-                                          char *buffer) {
+static uint_fast8_t
+can_message_to_buffer(uint32_t timestamp, const can_msg_t *message, char *buffer) {
     const char nibble_to_char[] = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+    };
 
-    // write three bytes of SID
-    buffer[0] = nibble_to_char[(message->sid >> 8) & 0xf];
-    buffer[1] = nibble_to_char[(message->sid >> 4) & 0xf];
-    buffer[2] = nibble_to_char[message->sid & 0xf];
+    // write timestamp
+    for (int i = 0; i < 8; i++) {
+        buffer[i] = nibble_to_char[(timestamp >> (28 - i * 4)) & 0xf];
+    }
+
+    // write SID
+    for (int i = 0; i < 8; i++) {
+        buffer[8 + i] = nibble_to_char[(message->sid >> (28 - i * 4)) & 0xf];
+    }
 
     // write the data
     uint8_t i;
     for (i = 0; i < message->data_len; ++i) {
-        buffer[3 + 2 * i] = nibble_to_char[(message->data[i] >> 4) & 0xf];
-        buffer[3 + 2 * i + 1] = nibble_to_char[message->data[i] & 0xf];
+        buffer[16 + 2 * i] = nibble_to_char[(message->data[i] >> 4) & 0xf];
+        buffer[16 + 2 * i + 1] = nibble_to_char[message->data[i] & 0xf];
     }
-    buffer[3 + 2 * i] = '\n';
+    buffer[16 + 2 * i] = '\n';
 
     // return the length of string we just wrote.
-    return 3 + 2 * i + 1;
+    return 16 + 2 * i + 1;
 }
 
 /*
@@ -122,6 +128,8 @@ static uint_fast8_t can_message_to_buffer(uint32_t timestamp, const can_msg_t *m
  * zero. Note that this function does not check ready_to_log bit,
  * it assumes that the caller wants this buffer logged regardless
  */
+static bool led_on = false;
+
 static void log_can_buffer(uint8_t index) {
     if (index >= CAN_LOG_BUFFERS) {
         return;
@@ -129,6 +137,14 @@ static void log_can_buffer(uint8_t index) {
     if (log_buffers[index].buffer_index == 0) {
         return;
     }
+
+    led_on = !led_on;
+    if (led_on) {
+        LED_RED_ON();
+    } else {
+        LED_RED_OFF();
+    }
+
     sd_card_log_to_file(log_buffers[index].buffer, log_buffers[index].buffer_index);
     memset(log_buffers[index].buffer, 0, sizeof(log_buffers[index].buffer));
     log_buffers[index].buffer_index = 0;
