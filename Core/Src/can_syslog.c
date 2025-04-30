@@ -23,8 +23,8 @@ can_message_to_buffer(uint32_t timestamp, const can_msg_t *message, char *buffer
  */
 
 #define MESSAGE_LENGTH_CHARS (8 + 8 + 16 + 1)
-#define CAN_LOG_BUFFERS 3
-#define CAN_BUFFER_SIZE 3072
+#define CAN_LOG_BUFFERS 4
+#define CAN_BUFFER_SIZE 4096
 
 struct log_buffer {
     bool ready_to_log;
