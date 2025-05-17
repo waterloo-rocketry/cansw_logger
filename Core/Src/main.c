@@ -1,20 +1,4 @@
 /* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -22,27 +6,18 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "canlib.h"
-#include "platform.h"
-#include "error.h"
-#include "health_check.h"
-#include "can_syslog.h"
-#include "sd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -54,7 +29,6 @@ FDCAN_HandleTypeDef hfdcan1;
 SD_HandleTypeDef hsd2;
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,44 +41,11 @@ static void MX_SDMMC2_SD_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
-
+extern void fwmain(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#define MAX_BUS_DEAD_TIME_ms 1000
-
-static uint8_t logger_off = 0;
-volatile bool seen_can_message = false;
-
-void can_callback_function(const can_msg_t *message, uint32_t)
-{
-    seen_can_message = true;
-
-    //handle a "LED_ON" or "LED_OFF" message
-    // Declare this outside of switch statement to prevent errors
-    switch (get_message_type(message)) {
-        case MSG_LEDS_ON:
-            LED_RED_ON();
-            LED_GREEN_ON();
-            break;
-        case MSG_LEDS_OFF:
-            LED_RED_OFF();
-            LED_GREEN_OFF();
-            break;
-        case MSG_RESET_CMD:
-            if(check_board_need_reset(message)) {
-                NVIC_SystemReset();
-            }
-            break;
-        default:
-            break;
-    }
-    // Stops logging after BUS_DOWN_WARNING
-    if(logger_off < 1)
-        handle_can_interrupt(message);
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -115,7 +56,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -127,7 +67,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -137,7 +76,6 @@ int main(void)
   PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -148,56 +86,14 @@ int main(void)
   MX_FATFS_Init();
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
-  init_can_syslog();
-  init_fs();
-  can_init_stm(&hfdcan1, can_callback_function);
-
-  bool led_on = false;
-  uint32_t last_blink_time = 0;
-
-  uint32_t last_board_status_msg = 0;
-  uint32_t last_message_time = 0;
-  
+  fwmain();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-        //lrWdt();
-        
-        can_syslog_heartbeat();
-        
-        if (seen_can_message) {
-            seen_can_message = false;
-            last_message_time = millis();
-        }
-        
-        if (millis() - last_message_time > MAX_BUS_DEAD_TIME_ms) {
-            // We've got too long without seeing a valid CAN message (including one of ours)
-            NVIC_SystemReset();
-        }
-        
-        if (millis() - last_blink_time > 500) {
-            led_on = !led_on;
-            if (led_on) {
-                LED_GREEN_ON();
-            } else {
-                LED_GREEN_OFF();
-            }
-            last_blink_time = millis();
-        }
-
-        //give status update
-        if (millis() - last_board_status_msg > 500) {
-			last_board_status_msg = millis();
-            health_check();
-        }
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
   /* USER CODE END 3 */
 }
 
@@ -295,14 +191,12 @@ static void MX_ADC1_Init(void)
 {
 
   /* USER CODE BEGIN ADC1_Init 0 */
-
   /* USER CODE END ADC1_Init 0 */
 
   ADC_MultiModeTypeDef multimode = {0};
   ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
-
   /* USER CODE END ADC1_Init 1 */
 
   /** Common config
@@ -350,7 +244,6 @@ static void MX_ADC1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
-
   /* USER CODE END ADC1_Init 2 */
 
 }
@@ -364,13 +257,11 @@ static void MX_ADC2_Init(void)
 {
 
   /* USER CODE BEGIN ADC2_Init 0 */
-
   /* USER CODE END ADC2_Init 0 */
 
   ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC2_Init 1 */
-
   /* USER CODE END ADC2_Init 1 */
 
   /** Common config
@@ -410,7 +301,6 @@ static void MX_ADC2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC2_Init 2 */
-
   /* USER CODE END ADC2_Init 2 */
 
 }
@@ -424,11 +314,9 @@ static void MX_FDCAN1_Init(void)
 {
 
   /* USER CODE BEGIN FDCAN1_Init 0 */
-
   /* USER CODE END FDCAN1_Init 0 */
 
   /* USER CODE BEGIN FDCAN1_Init 1 */
-
   /* USER CODE END FDCAN1_Init 1 */
   hfdcan1.Instance = FDCAN1;
   hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
@@ -463,7 +351,6 @@ static void MX_FDCAN1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN FDCAN1_Init 2 */
-
   /* USER CODE END FDCAN1_Init 2 */
 
 }
@@ -477,11 +364,9 @@ static void MX_SDMMC2_SD_Init(void)
 {
 
   /* USER CODE BEGIN SDMMC2_Init 0 */
-
   /* USER CODE END SDMMC2_Init 0 */
 
   /* USER CODE BEGIN SDMMC2_Init 1 */
-
   /* USER CODE END SDMMC2_Init 1 */
   hsd2.Instance = SDMMC2;
   hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
@@ -490,7 +375,6 @@ static void MX_SDMMC2_SD_Init(void)
   hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
   hsd2.Init.ClockDiv = 4;
   /* USER CODE BEGIN SDMMC2_Init 2 */
-
   /* USER CODE END SDMMC2_Init 2 */
 
 }
@@ -526,7 +410,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
 /* USER CODE END 4 */
 
  /* MPU Configuration */
@@ -565,11 +448,6 @@ void MPU_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -584,8 +462,6 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
