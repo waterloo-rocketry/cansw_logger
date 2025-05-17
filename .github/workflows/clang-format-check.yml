@@ -16,4 +16,4 @@ jobs:
         uses: waterloo-rocketry/actions/clang-format-check@main
         with:
           clang-format-config-path: 'rocketlib/.clang-format'
-          c-source-files: 'Core/Src/can_syslog.h Core/Src/can_syslog.c Core/Src/error.h Core/Src/error.c Core/Src/health_check.h Core/Src/health_check.c Core/Src/platform.h Core/Src/sd.h Core/Src/sd.c'
+          c-source-files: 'src/*.c src/*.h'
