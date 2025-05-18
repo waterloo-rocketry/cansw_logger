@@ -26,13 +26,13 @@ w_status_t fs_init(void) {
     // Create directory as nessary
     if ((counter % 1000) == 0) {
         char dir_name[100];
-        sprintf(dir_name, "dir_%04d", counter / 1000);
+        sprintf(dir_name, "dir_%04lu", counter / 1000);
         f_mkdir(dir_name);
     }
 
     // Choose file name
     char log_filename[100];
-    sprintf(log_filename, "dir_%04d/log_%04d.bin", counter / 1000, counter % 1000);
+    sprintf(log_filename, "dir_%04lu/log_%04lu.bin", counter / 1000, counter % 1000);
 
     // Update counter file
     ++counter;
