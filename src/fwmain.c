@@ -15,5 +15,7 @@ void fwmain(void) {
     fs_init();
     log_init();
 
-    for (;;) {}
+    for (;;) {
+        log_heartbeat();
+    }
 }
