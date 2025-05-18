@@ -42,13 +42,6 @@ w_status_t fs_init(void) {
 
     if (f_open(&logfile, log_filename, FA_WRITE | FA_CREATE_NEW) != FR_OK) {}
 
-    char header[] = {'=', '=', 'W', 'A', 'T', 'E', 'R', 'L', 'O', 'O', ' ', 'R', 'O', 'C',
-                     'K', 'E', 'T', 'R', 'Y', ' ', 'C', 'A', 'N', ' ', 'L', 'O', 'G', 'G',
-                     'E', 'R', ' ', 'V', '0', '.', '2', '.', '0', '=', '=', '\n'};
-
-    if (f_write(&logfile, header, sizeof(header), &retval) != FR_OK) {}
-    f_sync(&logfile);
-
     return W_SUCCESS;
 }
 
