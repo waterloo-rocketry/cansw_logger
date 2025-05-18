@@ -29,7 +29,7 @@ void can_callback_function(const can_msg_t *message, uint32_t) {
             break;
     }
 
-    log_handle_incoming_message(message);
+    log_handle_incoming_message(message, millis());
 }
 
 uint32_t last_board_status_msg = 0;

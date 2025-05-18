@@ -1,8 +1,8 @@
-#include "main.h"
 #include "canlib.h"
+#include "main.h"
 
-#include "platform.h"
 #include "health_check.h"
+#include "platform.h"
 
 extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
@@ -51,5 +51,5 @@ uint32_t health_check(void) {
     build_analog_data_msg(PRIO_LOW, millis(), SENSOR_12V_VOLT, battery_voltage_mV, &msg);
     can_send(&msg);
 
-    return 0;
+    return status_msg_general_status;
 }

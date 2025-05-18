@@ -28,7 +28,7 @@ w_status_t log_init(void) {
     return W_SUCCESS;
 }
 
-void log_handle_incoming_message(const can_msg_t *msg) {
+void log_handle_incoming_message(const can_msg_t *msg, uint32_t timestamp) {
     size_t pointer = log_buffer[active_write_buffer].pointer;
 
     if ((PAGE_SIZE - pointer) < (9 + msg->data_len)) { // Not enough space in buffer
@@ -68,6 +68,10 @@ void log_handle_incoming_message(const can_msg_t *msg) {
     log_buffer[active_write_buffer].buffer[pointer + 1] = (msg->sid >> 8) & 0xff;
     log_buffer[active_write_buffer].buffer[pointer + 2] = (msg->sid >> 16) & 0xff;
     log_buffer[active_write_buffer].buffer[pointer + 3] = (msg->sid >> 24) & 0xff;
+    log_buffer[active_write_buffer].buffer[pointer + 4] = timestamp & 0xff;
+    log_buffer[active_write_buffer].buffer[pointer + 5] = (timestamp >> 8) & 0xff;
+    log_buffer[active_write_buffer].buffer[pointer + 6] = (timestamp >> 16) & 0xff;
+    log_buffer[active_write_buffer].buffer[pointer + 7] = (timestamp >> 24) & 0xff;
     log_buffer[active_write_buffer].buffer[pointer + 8] = msg->data_len;
     memcpy(log_buffer[active_write_buffer].buffer + pointer + 9, msg->data, msg->data_len);
     log_buffer[active_write_buffer].pointer += 9 + msg->data_len;
