@@ -73,7 +73,7 @@ void log_handle_incoming_message(const can_msg_t *msg) {
     log_buffer[active_write_buffer].pointer += 9 + msg->data_len;
 }
 
-bool led_on = false;
+bool red_led_on = false;
 
 void log_heartbeat(void) {
     if (log_buffer[active_read_buffer].ready_to_write) {
@@ -81,12 +81,12 @@ void log_heartbeat(void) {
         log_buffer[active_read_buffer].ready_to_write = 0;
         active_read_buffer =
             (active_read_buffer >= (NUM_BUFFERS - 1)) ? 0 : (active_read_buffer + 1);
-        if (led_on) {
+        if (red_led_on) {
             LED_RED_OFF();
-            led_on = false;
+            red_led_on = false;
         } else {
             LED_RED_ON();
-            led_on = true;
+            red_led_on = true;
         }
     }
 }
