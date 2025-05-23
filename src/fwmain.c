@@ -37,7 +37,19 @@ bool green_led_on = false;
 
 void fwmain(void) {
     can_init_stm(&hfdcan1, can_callback_function);
-    fs_init();
+
+    if (fs_init() != W_SUCCESS) { // Filesystem Init Failed
+        for (;;) {
+            can_msg_t msg;
+            uint32_t general_error_code = health_check();
+            build_general_board_status_msg(
+                PRIO_HIGH, millis(), general_error_code | (1 << E_FS_ERROR_OFFSET), 0, &msg
+            );
+            can_send(&msg);
+            HAL_Delay(500);
+        }
+    }
+
     log_init();
 
     for (;;) {
