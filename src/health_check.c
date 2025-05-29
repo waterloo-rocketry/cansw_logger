@@ -1,8 +1,7 @@
-#include "health_check.h"
-#include "can_syslog.h"
 #include "canlib.h"
-#include "error.h"
-#include "message_types.h"
+#include "main.h"
+
+#include "health_check.h"
 #include "platform.h"
 
 extern ADC_HandleTypeDef hadc1;
@@ -18,7 +17,7 @@ extern ADC_HandleTypeDef hadc2;
 #define BATT_VOLT_LOW_THRESHOLD 8000
 #define BATT_VOLT_HIGH_THRESHOLD 13000 // ADC will saturate by then
 
-void health_check(void) {
+uint32_t health_check(void) {
     uint32_t status_msg_general_status = 0;
     can_msg_t msg;
 
@@ -52,8 +51,5 @@ void health_check(void) {
     build_analog_data_msg(PRIO_LOW, millis(), SENSOR_12V_VOLT, battery_voltage_mV, &msg);
     can_send(&msg);
 
-    HAL_Delay(1); // FIXME workaround to prevent sending message too fast
-
-    build_general_board_status_msg(PRIO_MEDIUM, millis(), status_msg_general_status, 0, &msg);
-    can_send(&msg);
+    return status_msg_general_status;
 }

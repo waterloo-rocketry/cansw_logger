@@ -14,4 +14,4 @@ static inline uint32_t millis(void) {
     return HAL_GetTick();
 };
 
-#endif /* PLATFORM_H */
+#endif

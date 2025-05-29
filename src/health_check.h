@@ -1,8 +1,8 @@
 #ifndef HEALTH_CHECK_H
 #define HEALTH_CHECK_H
 
-#include <stdbool.h>
+#include <stdint.h>
 
-void health_check(void);
+uint32_t health_check(void);
 
 #endif
