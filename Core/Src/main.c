@@ -2,7 +2,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -83,7 +82,6 @@ int main(void)
   MX_FDCAN1_Init();
   MX_SDMMC2_SD_Init();
   MX_ADC1_Init();
-  MX_FATFS_Init();
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
   fwmain();
@@ -374,6 +372,10 @@ static void MX_SDMMC2_SD_Init(void)
   hsd2.Init.BusWide = SDMMC_BUS_WIDE_4B;
   hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
   hsd2.Init.ClockDiv = 4;
+  if (HAL_SD_Init(&hsd2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN SDMMC2_Init 2 */
   /* USER CODE END SDMMC2_Init 2 */
 
