@@ -4,3 +4,6 @@
 [submodule "rocketlib"]
 	path = rocketlib
 	url = https://github.com/waterloo-rocketry/rocketlib.git
+[submodule "littlefs"]
+	path = littlefs
+	url = https://github.com/littlefs-project/littlefs.git
