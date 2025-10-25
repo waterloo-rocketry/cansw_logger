@@ -10,8 +10,8 @@
 
 #define MAX_FILE_PER_DIR 1000
 
-//FATFS fatfs;
-//FIL logfile;
+// FATFS fatfs;
+// FIL logfile;
 
 lfs_t lfs;
 lfs_file_t logfile;
@@ -21,20 +21,20 @@ uint32_t page_counter = 0;
 
 // configuration of the filesystem is provided by this struct
 const struct lfs_config cfg = {
-	// block device operations
-	.read = sd_read,
-	.prog = user_provided_block_device_prog,
-	.erase = user_provided_block_device_erase,
-	.sync = user_provided_block_device_sync,
+    // block device operations
+    .read = sd_read,
+    .prog = user_provided_block_device_prog,
+    .erase = user_provided_block_device_erase,
+    .sync = user_provided_block_device_sync,
 
-	// block device configuration
-	.read_size = 16,
-	.prog_size = 16,
-	.block_size = 4096,
-	.block_count = 128,
-	.cache_size = 16,
-	.lookahead_size = 16,
-	.block_cycles = 500,
+    // block device configuration
+    .read_size = 16,
+    .prog_size = 16,
+    .block_size = 4096,
+    .block_count = 128,
+    .cache_size = 16,
+    .lookahead_size = 16,
+    .block_cycles = 500,
 };
 
 static void fs_new_file(void) {
@@ -79,7 +79,7 @@ w_status_t fs_init(void) {
     // Read the file count counter
     lfs_file_t counter_file;
     if (lfs_file_open(&lfs, &counter_file, "counter.bin", FA_READ) == FR_OK) {
-    	lfs_file_read(&lfs, &counter_file, &index_counter, sizeof(index_counter));
+        lfs_file_read(&lfs, &counter_file, &index_counter, sizeof(index_counter));
     }
     lfs_file_close(&lfs, &counter_file);
 
@@ -94,9 +94,9 @@ void fs_write_page(const uint8_t *page) {
     ++page_counter;
 
     if (page_counter >= MAX_FILE_SIZE_PAGES) {
-    	lfs_file_close(&lfs, &logfile);
+        lfs_file_close(&lfs, &logfile);
         fs_new_file();
     } else {
-    	lfs_file_sync(&lfs, &logfile);
+        lfs_file_sync(&lfs, &logfile);
     }
 }
