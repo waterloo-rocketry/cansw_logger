@@ -124,7 +124,7 @@ w_status_t fs_init(void) {
     	return W_FAILURE;
     }
 
-    if (lfs_mount(&lfs, &cfg) != FR_OK) {
+    if (lfs_mount(&lfs, &cfg) != 0) {
     	    return W_IO_ERROR;
     	 }
 
