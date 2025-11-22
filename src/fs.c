@@ -68,16 +68,17 @@ static void fs_new_file(void) {
 }
 
 w_status_t fs_init(void) {
-	//    unsigned int retval;
+	HAL_SD_InitCard(lfs_shim_hsd);
+
 	uint8_t mbr_sector[512];
-	uint32_t timeout_ms = 2000U;
-	HAL_StatusTypeDef hal = HAL_SD_ReadBlocks(lfs_shim_hsd, mbr_sector, 0, 1, timeout_ms);
+
+	HAL_StatusTypeDef hal = HAL_SD_ReadBlocks(lfs_shim_hsd, mbr_sector, 0, 1, 50U);
 	if (hal != HAL_OK) {
 		return W_FAILURE;
 	}
 
 	w_status_t status;
-	if ((status = mbr_parse(mbr_sector, 83, &first_sector_offset)) != W_SUCCESS) {
+	if ((status = mbr_parse(mbr_sector, 0x83, &first_sector_offset)) != W_SUCCESS) {
 		return status;
 	}
 
