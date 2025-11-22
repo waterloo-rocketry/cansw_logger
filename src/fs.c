@@ -72,12 +72,12 @@ w_status_t fs_init(void) {
 	uint8_t mbr_sector[512];
 	uint32_t timeout_ms = 2000U;
 	HAL_StatusTypeDef hal = HAL_SD_ReadBlocks(lfs_shim_hsd, mbr_sector, 0, 1, timeout_ms);
-    if (hal != HAL_OK) {
-        return W_FAILURE;
-    }
+	if (hal != HAL_OK) {
+		return W_FAILURE;
+	}
 
-    w_status_t status;
-	if((status = mbr_parse(mbr_sector, 83, &first_sector_offset)) != W_SUCCESS){
+	w_status_t status;
+	if ((status = mbr_parse(mbr_sector, 83, &first_sector_offset)) != W_SUCCESS) {
 		return status;
 	}
 
