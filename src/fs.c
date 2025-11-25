@@ -62,8 +62,8 @@ static void fs_new_file(void) {
 
 	// Update counter file
 	lfs_file_t counter_file;
-	int status =
-		lfs_file_open(&lfs, &counter_file, "counter.bin", LFS_O_RDWR | LFS_O_CREAT | LFS_O_TRUNC);
+	int status = lfs_file_open(
+		&lfs, &counter_file, "/counter.bin", LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC);
 	lfs_file_write(&lfs, &counter_file, &index_counter, sizeof(index_counter));
 	lfs_file_close(&lfs, &counter_file);
 
@@ -87,6 +87,12 @@ w_status_t fs_init(void) {
 	if ((status = mbr_parse(mbr_sector, 0x83, &first_sector_offset)) != W_SUCCESS) {
 		return status;
 	}
+
+	// memset(&lfs, 0, sizeof(lfs));
+
+	// int formatstatus = lfs_format(&lfs, &cfg);
+
+	memset(&lfs, 0, sizeof(lfs));
 
 	if (lfs_mount(&lfs, &cfg) != 0) {
 		return W_IO_ERROR;
