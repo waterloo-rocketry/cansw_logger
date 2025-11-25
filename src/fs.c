@@ -26,14 +26,20 @@ const struct lfs_config cfg = {
 	.erase = sd_erase,
 	.sync = sd_sync,
 
-	// block device configuratio4n
-	.read_size = 16,
-	.prog_size = 16,
-	.block_size = 4096,
-	.block_count = 128,
-	.cache_size = 16,
-	.lookahead_size = 16,
-	.block_cycles = 500,
+	// block device configuration
+	.read_size = 512,
+	.prog_size = 512,
+	.block_size = 512,
+	.block_count = 0,
+	.block_cycles = -1,
+	.cache_size = 512,
+	.lookahead_size = 512,
+	.compact_thresh = -1,
+	.name_max = 0,
+	.file_max = 0,
+	.attr_max = 0,
+	.metadata_max = 0,
+	.inline_max = -1
 };
 
 static void fs_new_file(void) {
@@ -57,7 +63,7 @@ static void fs_new_file(void) {
 
 	// Update counter file
 	lfs_file_t counter_file;
-	lfs_file_open(&lfs, &counter_file, "counter.bin", LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC);
+	int status = lfs_file_open(&lfs, &counter_file, "counter.bin", LFS_O_RDWR | LFS_O_CREAT | LFS_O_TRUNC);
 	lfs_file_write(&lfs, &counter_file, &index_counter, sizeof(index_counter));
 	lfs_file_close(&lfs, &counter_file);
 
@@ -90,8 +96,8 @@ w_status_t fs_init(void) {
 	lfs_file_t counter_file;
 	if (lfs_file_open(&lfs, &counter_file, "counter.bin", LFS_O_RDONLY) == 0) {
 		lfs_file_read(&lfs, &counter_file, &index_counter, sizeof(index_counter));
+		lfs_file_close(&lfs, &counter_file);
 	}
-	lfs_file_close(&lfs, &counter_file);
 
 	fs_new_file();
 
