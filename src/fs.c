@@ -39,8 +39,7 @@ const struct lfs_config cfg = {
 	.file_max = 0,
 	.attr_max = 0,
 	.metadata_max = 0,
-	.inline_max = -1
-};
+	.inline_max = -1};
 
 static void fs_new_file(void) {
 	//    unsigned int retval;
@@ -63,7 +62,8 @@ static void fs_new_file(void) {
 
 	// Update counter file
 	lfs_file_t counter_file;
-	int status = lfs_file_open(&lfs, &counter_file, "counter.bin", LFS_O_RDWR | LFS_O_CREAT | LFS_O_TRUNC);
+	int status =
+		lfs_file_open(&lfs, &counter_file, "counter.bin", LFS_O_RDWR | LFS_O_CREAT | LFS_O_TRUNC);
 	lfs_file_write(&lfs, &counter_file, &index_counter, sizeof(index_counter));
 	lfs_file_close(&lfs, &counter_file);
 
