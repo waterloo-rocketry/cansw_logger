@@ -85,7 +85,7 @@
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
-						<entry excluding=".github/|dspic33epxxxgp50x/|mcp2515/|pic18f26k83/|tests/|util/" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="canlib"/>
+						<entry excluding="util/|tests/|pic18f26k83/|.github/|dspic33epxxxgp50x/|mcp2515/" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="canlib"/>
 						<entry excluding="runners|bd" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="littlefs"/>
 						<entry excluding="tests|pic18f26k83" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="rocketlib"/>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="src"/>

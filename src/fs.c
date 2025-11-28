@@ -12,6 +12,8 @@
 
 #define MAX_FILE_PER_DIR 1000
 
+SD_HandleTypeDef *lfsshim_hsd = &hsd2;
+
 lfs_t lfs;
 lfs_file_t logfile;
 
@@ -74,17 +76,17 @@ static void fs_new_file(void) {
 }
 
 w_status_t fs_init(void) {
-	HAL_SD_InitCard(lfs_shim_hsd);
+	HAL_SD_InitCard(lfsshim_hsd);
 
 	uint8_t mbr_sector[512];
 
-	HAL_StatusTypeDef hal = HAL_SD_ReadBlocks(lfs_shim_hsd, mbr_sector, 0, 1, 50U);
+	HAL_StatusTypeDef hal = HAL_SD_ReadBlocks(lfsshim_hsd, mbr_sector, 0, 1, 50U);
 	if (hal != HAL_OK) {
 		return W_FAILURE;
 	}
 
 	w_status_t status;
-	if ((status = mbr_parse(mbr_sector, 0x83, &first_sector_offset)) != W_SUCCESS) {
+	if ((status = mbr_parse(mbr_sector, 0x83, &lfsshim_first_block_offset)) != W_SUCCESS) {
 		return status;
 	}
 
