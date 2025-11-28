@@ -72,3 +72,7 @@ void fwmain(void) {
 		log_heartbeat();
 	}
 }
+
+void w_assert_fail(const char *file, int line, const char *statement) {
+	NVIC_SystemReset();
+}

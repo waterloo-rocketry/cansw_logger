@@ -73,7 +73,7 @@ static void fs_new_file(void) {
 }
 
 w_status_t fs_init(void) {
-	SD_HandleTypeDef *lfsshim_hsd = &hsd2;
+	lfsshim_hsd = &hsd2;
 
 	HAL_SD_InitCard(lfsshim_hsd);
 
