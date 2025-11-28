@@ -12,8 +12,6 @@
 
 #define MAX_FILE_PER_DIR 1000
 
-SD_HandleTypeDef *lfsshim_hsd = &hsd2;
-
 lfs_t lfs;
 lfs_file_t logfile;
 
@@ -23,10 +21,10 @@ uint32_t page_counter = 0;
 // configuration of the filesystem is provided by this struct
 const struct lfs_config cfg = {
 	// block device operations
-	.read = sd_read,
-	.prog = sd_write,
-	.erase = sd_erase,
-	.sync = sd_sync,
+	.read = lfsshim_read,
+	.prog = lfsshim_write,
+	.erase = lfsshim_erase,
+	.sync = lfsshim_sync,
 
 	// block device configuration
 	.read_size = 512,
@@ -64,8 +62,7 @@ static void fs_new_file(void) {
 
 	// Update counter file
 	lfs_file_t counter_file;
-	int status = lfs_file_open(
-		&lfs, &counter_file, "/counter.bin", LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC);
+	lfs_file_open(&lfs, &counter_file, "/counter.bin", LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC);
 	lfs_file_write(&lfs, &counter_file, &index_counter, sizeof(index_counter));
 	lfs_file_close(&lfs, &counter_file);
 
@@ -76,6 +73,8 @@ static void fs_new_file(void) {
 }
 
 w_status_t fs_init(void) {
+	SD_HandleTypeDef *lfsshim_hsd = &hsd2;
+
 	HAL_SD_InitCard(lfsshim_hsd);
 
 	uint8_t mbr_sector[512];
