@@ -52,21 +52,9 @@ static void fs_new_file(void) {
 w_status_t fs_init(void) {
 	HAL_SD_InitCard(&hsd2);
 
-	uint8_t mbr_sector[512];
-
-	HAL_StatusTypeDef hal = HAL_SD_ReadBlocks(&hsd2, mbr_sector, 0, 1, 50U);
-	if (hal != HAL_OK) {
+	// LittleFS mount
+	if (lfsshim_mount_mbr(&lfs, &hsd2) != 0) {
 		return W_FAILURE;
-	}
-
-	uint32_t first_block_offset = 0;
-	w_status_t status;
-	if ((status = mbr_parse(mbr_sector, 0x83, &first_block_offset)) != W_SUCCESS) {
-		return status;
-	}
-
-	if (lfsshim_mount(&lfs, &hsd2, first_block_offset) != 0) {
-		return W_IO_ERROR;
 	}
 
 	// Read the file count counter
