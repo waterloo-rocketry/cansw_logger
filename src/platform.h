@@ -11,7 +11,7 @@
 
 // number of milliseconds since bootup
 static inline uint32_t millis(void) {
-    return HAL_GetTick();
+	return HAL_GetTick();
 };
 
 #endif
