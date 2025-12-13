@@ -18,29 +18,6 @@ lfs_file_t logfile;
 uint32_t index_counter = 0;
 uint32_t page_counter = 0;
 
-// configuration of the filesystem is provided by this struct
-const struct lfs_config cfg = {
-	// block device operations
-	.read = lfsshim_read,
-	.prog = lfsshim_write,
-	.erase = lfsshim_erase,
-	.sync = lfsshim_sync,
-
-	// block device configuration
-	.read_size = 512,
-	.prog_size = 512,
-	.block_size = 512,
-	.block_count = 0,
-	.block_cycles = -1,
-	.cache_size = 512,
-	.lookahead_size = 512,
-	.compact_thresh = -1,
-	.name_max = 0,
-	.file_max = 0,
-	.attr_max = 0,
-	.metadata_max = 0,
-	.inline_max = -1};
-
 static void fs_new_file(void) {
 	//    unsigned int retval;
 
@@ -73,29 +50,22 @@ static void fs_new_file(void) {
 }
 
 w_status_t fs_init(void) {
-	lfsshim_hsd = &hsd2;
-
-	HAL_SD_InitCard(lfsshim_hsd);
+	HAL_SD_InitCard(&hsd2);
 
 	uint8_t mbr_sector[512];
 
-	HAL_StatusTypeDef hal = HAL_SD_ReadBlocks(lfsshim_hsd, mbr_sector, 0, 1, 50U);
+	HAL_StatusTypeDef hal = HAL_SD_ReadBlocks(&hsd2, mbr_sector, 0, 1, 50U);
 	if (hal != HAL_OK) {
 		return W_FAILURE;
 	}
 
+	uint32_t first_block_offset = 0;
 	w_status_t status;
-	if ((status = mbr_parse(mbr_sector, 0x83, &lfsshim_first_block_offset)) != W_SUCCESS) {
+	if ((status = mbr_parse(mbr_sector, 0x83, &first_block_offset)) != W_SUCCESS) {
 		return status;
 	}
 
-	// memset(&lfs, 0, sizeof(lfs));
-
-	// int formatstatus = lfs_format(&lfs, &cfg);
-
-	memset(&lfs, 0, sizeof(lfs));
-
-	if (lfs_mount(&lfs, &cfg) != 0) {
+	if (lfsshim_mount(&lfs, &hsd2, first_block_offset) != 0) {
 		return W_IO_ERROR;
 	}
 
