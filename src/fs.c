@@ -10,6 +10,8 @@
 #include "log.h"
 #include "mbr.h"
 
+extern SD_HandleTypeDef hsd1;
+
 #define MAX_FILE_PER_DIR 1000
 
 lfs_t lfs;
@@ -50,10 +52,10 @@ static void fs_new_file(void) {
 }
 
 w_status_t fs_init(void) {
-	HAL_SD_InitCard(&hsd2);
+	HAL_SD_InitCard(&hsd1);
 
 	// LittleFS mount
-	if (lfsshim_mount_mbr(&lfs, &hsd2) != 0) {
+	if (lfsshim_mount_mbr(&lfs, &hsd1) != 0) {
 		return W_FAILURE;
 	}
 
