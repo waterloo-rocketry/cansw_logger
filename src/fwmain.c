@@ -21,7 +21,7 @@ void can_callback_function(const can_msg_t *message, uint32_t) {
 			LED_GREEN_OFF();
 			break;
 		case MSG_RESET_CMD:
-			bool need_reset = true;
+			bool need_reset = false;
 			check_board_need_reset(message, &need_reset);
 			if (need_reset) {
 				NVIC_SystemReset();
@@ -71,16 +71,6 @@ void fwmain(void) {
 
 			build_analog_sensor_32bit_msg(
 				PRIO_LOW, millis(), SENSOR_SD_LOG_FILE_NAME, fs_get_sd_log_file_name(), &msg);
-			stm32h7_can_send(&msg);
-
-			HAL_Delay(20); // FIXME cannot transmit 3 messages back to back workaround
-
-			build_analog_sensor_32bit_msg(
-				PRIO_LOW, millis(), SENSOR_SD_USED, fs_get_sd_used(), &msg);
-			stm32h7_can_send(&msg);
-
-			build_analog_sensor_32bit_msg(
-				PRIO_LOW, millis(), SENSOR_SD_FREE, fs_get_sd_free(), &msg);
 			stm32h7_can_send(&msg);
 
 			if (green_led_on) {

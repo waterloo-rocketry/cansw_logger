@@ -20,12 +20,6 @@ lfs_file_t logfile;
 uint32_t index_counter = 0;
 uint32_t page_counter = 0;
 
-static uint32_t sd_used = 0;
-static uint32_t sd_free = 0;
-static uint32_t flash_log_file_name;
-static uint32_t flash_used = 0;
-static uint32_t flash_free = 0;
-
 static void fs_new_file(void) {
 	// Create directory as nessary
 	if ((index_counter % MAX_FILE_PER_DIR) == 0) {
@@ -88,30 +82,12 @@ void fs_write_page(const uint8_t *page) {
 	}
 }
 
-w_status_t status_report(void) {
-	struct lfs_fsinfo fsinfo;
-	int result = lfs_fs_stat(&lfs, &fsinfo);
-	if (result < 0) {
-		return W_FAILURE;
-	}
-
-	sd_used = (lfs_fs_size(&lfs) * fsinfo.block_size) >> 20;
-	sd_free = ((fsinfo.block_count - lfs_fs_size(&lfs)) * fsinfo.block_size) >> 20;
-	return W_SUCCESS;
-}
-
 uint32_t fs_get_log_written_size(void) {
 	return page_counter * PAGE_SIZE;
 }
 
 uint32_t fs_get_sd_log_file_name(void) {
-	return index_counter;
-}
-
-uint32_t fs_get_sd_used(void) {
-	return sd_used;
-}
-
-uint32_t fs_get_sd_free(void) {
-	return sd_free;
+	// Because index_counter is file name of next file to be created, so decrement by 1 to get
+	// current file name
+	return index_counter - 1;
 }
