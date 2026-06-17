@@ -4,6 +4,7 @@
 #include "fs.h"
 #include "health_check.h"
 #include "log.h"
+#include "mx25l25645g.h"
 #include "platform.h"
 
 #define BOARD_HEARTBEAT_PERIOD 500
@@ -52,6 +53,7 @@ void fwmain(void) {
 	}
 
 	log_init();
+	mx25l25645g_init();
 
 	for (;;) {
 		if (millis() - last_board_status_msg > BOARD_HEARTBEAT_PERIOD) {
