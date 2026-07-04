@@ -10,7 +10,7 @@
 
 extern FDCAN_HandleTypeDef hfdcan1;
 
-void can_callback_function(const can_msg_t *message, uint32_t) {
+void can_callback_function(const can_msg_t *message) {
 	switch (get_message_type(message)) {
 		case MSG_LEDS_ON:
 			LED_RED_ON();
