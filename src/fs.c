@@ -52,9 +52,11 @@ static void fs_new_file(void) {
 w_status_t fs_init(void) {
 	HAL_SD_InitCard(&hsd1);
 
-	// LittleFS mount
+	__disable_irq();
 
+	// LittleFS mount
 	if (lfsshim_sd_mount_mbr(&lfs, &hsd1) != 0) {
+		__enable_irq();
 		return W_FAILURE;
 	}
 
@@ -67,10 +69,13 @@ w_status_t fs_init(void) {
 
 	fs_new_file();
 
+	__enable_irq();
 	return W_SUCCESS;
 }
 
 void fs_write_page(const uint8_t *page) {
+	__disable_irq();
+
 	if (lfs_file_write(&lfs, &logfile, page, PAGE_SIZE) != 0) {}
 	++page_counter;
 
@@ -80,6 +85,8 @@ void fs_write_page(const uint8_t *page) {
 	} else {
 		lfs_file_sync(&lfs, &logfile);
 	}
+
+	__enable_irq();
 }
 
 uint32_t fs_get_log_written_size(void) {

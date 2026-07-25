@@ -44,6 +44,7 @@ void fwmain(void) {
 		for (;;) {
 			can_msg_t msg;
 			uint32_t general_error_code = health_check();
+			HAL_Delay(20); // FIXME cannot transmit 3 messages back to back workaround
 			build_general_board_status_msg(
 				PRIO_HIGH, millis(), general_error_code | (1 << E_FS_ERROR_OFFSET), &msg);
 			stm32h7_can_send(&msg);
