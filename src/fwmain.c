@@ -10,7 +10,7 @@
 
 extern FDCAN_HandleTypeDef hfdcan1;
 
-void can_callback_function(const can_msg_t *message, uint32_t) {
+void can_callback_function(const can_msg_t *message) {
 	switch (get_message_type(message)) {
 		case MSG_LEDS_ON:
 			LED_RED_ON();
@@ -60,17 +60,17 @@ void fwmain(void) {
 			can_msg_t msg;
 			uint32_t general_error_code = health_check();
 
+			HAL_Delay(20); // FIXME cannot transmit 3 messages back to back workaround
+
 			build_general_board_status_msg(PRIO_HIGH, millis(), general_error_code, &msg);
+			stm32h7_can_send(&msg);
+
+			build_analog_sensor_32bit_msg(PRIO_LOW, millis(), SENSOR_LOG_WRITTEN_SIZE, fs_get_log_written_size(), &msg);
 			stm32h7_can_send(&msg);
 
 			HAL_Delay(20); // FIXME cannot transmit 3 messages back to back workaround
 
-			build_analog_sensor_32bit_msg(
-				PRIO_LOW, millis(), SENSOR_LOG_WRITTEN_SIZE, fs_get_log_written_size(), &msg);
-			stm32h7_can_send(&msg);
-
-			build_analog_sensor_32bit_msg(
-				PRIO_LOW, millis(), SENSOR_SD_LOG_FILE_NAME, fs_get_sd_log_file_name(), &msg);
+			build_analog_sensor_32bit_msg(PRIO_LOW, millis(), SENSOR_SD_LOG_FILE_NAME, fs_get_sd_log_file_name(), &msg);
 			stm32h7_can_send(&msg);
 
 			if (green_led_on) {

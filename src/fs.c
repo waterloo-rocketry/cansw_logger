@@ -8,7 +8,7 @@
 #include "fs.h"
 #include "log.h"
 #include "mbr.h"
-#include "stm32/littlefs_sd_shim.h"
+#include "stm32h7/littlefs_sd_shim.h"
 
 extern SD_HandleTypeDef hsd1;
 
