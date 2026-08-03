@@ -12,6 +12,6 @@
 
 w_status_t log_init(void);
 void log_handle_incoming_message(const can_msg_t *msg, uint32_t timestamp);
-void log_heartbeat(void);
+void log_heartbeat(uint32_t messages_logged); //remove me
 
 #endif

@@ -10,6 +10,8 @@
 
 extern FDCAN_HandleTypeDef hfdcan1;
 
+static uint32_t messages_logged = 0; // REMOVE ME
+
 void can_callback_function(const can_msg_t *message) {
 	switch (get_message_type(message)) {
 		case MSG_LEDS_ON:
@@ -31,11 +33,12 @@ void can_callback_function(const can_msg_t *message) {
 			break;
 	}
 
+    ++messages_logged; // REMOVE ME
 	log_handle_incoming_message(message, millis());
 }
 
 uint32_t last_board_status_msg = 0;
-bool green_led_on = false;
+bool green_led_on = true;
 
 void fwmain(void) {
 	stm32h7_can_init(&hfdcan1, can_callback_function);
@@ -83,7 +86,7 @@ void fwmain(void) {
 			}
 		}
 
-		log_heartbeat();
+		log_heartbeat(messages_logged /* remove me */);
 	}
 }
 

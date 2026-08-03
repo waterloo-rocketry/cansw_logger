@@ -50,8 +50,6 @@ static void fs_new_file(void) {
 }
 
 w_status_t fs_init(void) {
-	HAL_SD_InitCard(&hsd1);
-
 	__disable_irq();
 
 	// LittleFS mount
