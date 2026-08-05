@@ -2,89 +2,84 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "lfs.h"
+#include "fatfs.h"
 #include "main.h"
 
 #include "fs.h"
 #include "log.h"
-#include "mbr.h"
-#include "stm32h7/littlefs_sd_shim.h"
 
 extern SD_HandleTypeDef hsd1;
 
 #define MAX_FILE_PER_DIR 1000
 
-lfs_t lfs;
-lfs_file_t logfile;
+FATFS fatfs;
+FIL logfile;
 
 uint32_t index_counter = 0;
 uint32_t page_counter = 0;
 
 static void fs_new_file(void) {
+	unsigned int retval;
+
 	// Create directory as nessary
 	if ((index_counter % MAX_FILE_PER_DIR) == 0) {
 		char dir_name[100];
 		sprintf(dir_name, "dir_%04lu", index_counter / MAX_FILE_PER_DIR);
-		lfs_mkdir(&lfs, dir_name);
+		f_mkdir(dir_name);
 	}
 
 	// Choose file name
 	char log_filename[100];
-	sprintf(log_filename,
-			"dir_%04lu/log_%04lu.bin",
-			index_counter / MAX_FILE_PER_DIR,
-			index_counter % MAX_FILE_PER_DIR);
+	sprintf(
+		log_filename,
+		"dir_%04lu/log_%04lu.bin",
+		index_counter / MAX_FILE_PER_DIR,
+		index_counter % MAX_FILE_PER_DIR
+	);
 
 	++index_counter;
 
 	// Update counter file
-	lfs_file_t counter_file;
-	lfs_file_open(&lfs, &counter_file, "/counter.bin", LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC);
-	lfs_file_write(&lfs, &counter_file, &index_counter, sizeof(index_counter));
-	lfs_file_close(&lfs, &counter_file);
+	FIL counter_file;
+	f_open(&counter_file, "counter.bin", FA_WRITE | FA_CREATE_ALWAYS);
+	f_write(&counter_file, &index_counter, sizeof(index_counter), &retval);
+	f_close(&counter_file);
 
-	if (lfs_file_open(&lfs, &logfile, log_filename, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_EXCL) != 0) {
-	}
+	if (f_open(&logfile, log_filename, FA_WRITE | FA_CREATE_NEW) != FR_OK) {}
 
 	page_counter = 0;
 }
 
 w_status_t fs_init(void) {
-	__disable_irq();
+	unsigned int retval;
 
-	// LittleFS mount
-	if (lfsshim_sd_mount_mbr(&lfs, &hsd1) != 0) {
-		__enable_irq();
-		return W_FAILURE;
+	if (f_mount(&fatfs, "", 0) != FR_OK) {
+		return W_IO_ERROR;
 	}
 
 	// Read the file count counter
-	lfs_file_t counter_file;
-	if (lfs_file_open(&lfs, &counter_file, "counter.bin", LFS_O_RDONLY) == 0) {
-		lfs_file_read(&lfs, &counter_file, &index_counter, sizeof(index_counter));
-		lfs_file_close(&lfs, &counter_file);
+	FIL counter_file;
+	if (f_open(&counter_file, "counter.bin", FA_READ) == FR_OK) {
+		f_read(&counter_file, &index_counter, sizeof(index_counter), &retval);
 	}
+	f_close(&counter_file);
 
 	fs_new_file();
 
-	__enable_irq();
 	return W_SUCCESS;
 }
 
 void fs_write_page(const uint8_t *page) {
-	__disable_irq();
-
-	if (lfs_file_write(&lfs, &logfile, page, PAGE_SIZE) != 0) {}
+	unsigned int retval;
+	if (f_write(&logfile, page, PAGE_SIZE, &retval) != FR_OK) {}
 	++page_counter;
 
 	if (page_counter >= MAX_FILE_SIZE_PAGES) {
-		lfs_file_close(&lfs, &logfile);
+		f_close(&logfile);
 		fs_new_file();
 	} else {
-		lfs_file_sync(&lfs, &logfile);
+		f_sync(&logfile);
 	}
-
-	__enable_irq();
 }
 
 uint32_t fs_get_log_written_size(void) {

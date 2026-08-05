@@ -79,15 +79,9 @@ void log_handle_incoming_message(const can_msg_t *msg, uint32_t timestamp) {
 
 bool red_led_on = false;
 
-void log_heartbeat(uint32_t messages_logged) {
+void log_heartbeat(void) {
 	if (log_buffer[active_read_buffer].ready_to_write) {
 		fs_write_page(log_buffer[active_read_buffer].buffer);
-
-        // REMOVE ME
-		can_msg_t msg;
-		build_analog_sensor_32bit_msg(PRIO_LOW, millis(), SENSOR_TC_0, messages_logged, &msg);
-        stm32h7_can_send(&msg);
-
 		log_buffer[active_read_buffer].ready_to_write = 0;
 		active_read_buffer =
 			(active_read_buffer >= (NUM_BUFFERS - 1)) ? 0 : (active_read_buffer + 1);
