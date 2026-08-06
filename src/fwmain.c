@@ -59,7 +59,7 @@ void fwmain(void) {
 			last_board_status_msg = millis();
 
 			can_msg_t msg;
-			uint32_t general_error_code = health_check();
+			uint32_t general_error_code = health_check() | fs_get_error();
 
 			HAL_Delay(20); // FIXME cannot transmit 3 messages back to back workaround
 

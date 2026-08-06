@@ -7,16 +7,18 @@
 
 #include "fs.h"
 #include "log.h"
+#include "platform.h"
 
 extern SD_HandleTypeDef hsd1;
 
 #define MAX_FILE_PER_DIR 1000
 
-FATFS fatfs;
-FIL logfile;
+static FATFS fatfs;
+static FIL logfile;
 
-uint32_t index_counter = 0;
-uint32_t page_counter = 0;
+static uint32_t index_counter = 0;
+static uint32_t page_counter = 0;
+static FRESULT fs_result = FR_OK;
 
 static void fs_new_file(void) {
 	unsigned int retval;
@@ -45,7 +47,7 @@ static void fs_new_file(void) {
 	f_write(&counter_file, &index_counter, sizeof(index_counter), &retval);
 	f_close(&counter_file);
 
-	if (f_open(&logfile, log_filename, FA_WRITE | FA_CREATE_NEW) != FR_OK) {}
+	fs_result = f_open(&logfile, log_filename, FA_WRITE | FA_OPEN_ALWAYS);
 
 	page_counter = 0;
 }
@@ -71,7 +73,7 @@ w_status_t fs_init(void) {
 
 void fs_write_page(const uint8_t *page) {
 	unsigned int retval;
-	if (f_write(&logfile, page, PAGE_SIZE, &retval) != FR_OK) {}
+	fs_result = f_write(&logfile, page, PAGE_SIZE, &retval);
 	++page_counter;
 
 	if (page_counter >= MAX_FILE_SIZE_PAGES) {
@@ -90,4 +92,11 @@ uint32_t fs_get_sd_log_file_name(void) {
 	// Because index_counter is file name of next file to be created, so decrement by 1 to get
 	// current file name
 	return index_counter - 1;
+}
+
+uint32_t fs_get_error(void) {
+	if(fs_result != FR_OK) {
+		return 1 << E_FS_ERROR_OFFSET;
+	}
+	return 0;
 }
