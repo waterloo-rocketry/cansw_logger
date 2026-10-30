@@ -16,6 +16,38 @@ extern const struct lfs_config config;
 static lfs_t lfs;
 static lfs_file_t file;
 mx25l25645g_t flash;
+MDMA_HandleTypeDef mdma = {0};
+
+static void mdma_init(void){
+
+	__HAL_RCC_MDMA_CLK_ENABLE();
+	
+	mdma.Instance = MDMA_Channel0;
+	mdma.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+	mdma.Init.Request = MDMA_REQUEST_QUADSPI_FIFO_TH;
+
+	/* These are overridden by QSPI HAL during transmit/recieve */
+	mdma.Init.DestinationInc = MDMA_DEST_INC_DISABLE;
+	mdma.Init.SourceInc = MDMA_SRC_INC_BYTE;
+
+	mdma.Init.BufferTransferLength = 1U;
+	mdma.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
+	mdma.Init.Priority = MDMA_PRIORITY_HIGH;
+	mdma.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+	mdma.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+	mdma.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
+
+	HAL_MDMA_Init(&mdma);
+
+	__HAL_LINKDMA(&hqspi, hmdma, mdma);
+
+	HAL_NVIC_SetPriority(MDMA_IRQn, 5U, 0U);
+	HAL_NVIC_SetPriority(QUADSPI_IRQn, 5U, 0U);
+	HAL_NVIC_EnableIRQ(MDMA_IRQn);
+	HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
+
+}
+
 
 void can_callback_function(const can_msg_t *message) {
 	switch (get_message_type(message)) {
@@ -48,7 +80,18 @@ void fwmain(void) {
 
 	int status;
 	stm32h7_can_init(&hfdcan1, can_callback_function);
+	mdma_init();
 	mx25l25645g_init(&flash, &hqspi, GPIOB, GPIO_PIN_10);
+
+	uint8_t data = 0x67U;
+	uint8_t read_buffer = 0U;
+	uint32_t addr = 0xFFFU;
+
+	mx25l25645g_erase_sector(&flash, 0x0U);
+
+	mx25l25645g_write_dma(&flash, &data, addr, 1U);
+
+	/*
 
 	int err = lfs_mount(&lfs, &config);
 
@@ -81,8 +124,14 @@ void fwmain(void) {
 	
 	log_init();
 	*/
+	
 
 	for (;;) {
+
+		if (!flash.rx_in_progress && mx25l25645g_check_programming(&flash) == MX25L25645G_STATUS_OK){
+			mx25l25645g_quad_read_dma(&flash, &read_buffer, addr, 1U);
+		}
+
 		/*
 		if (millis() - last_board_status_msg > BOARD_HEARTBEAT_PERIOD) {
 			last_board_status_msg = millis();
