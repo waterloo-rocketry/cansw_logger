@@ -56,6 +56,8 @@
 
 /* External variables --------------------------------------------------------*/
 extern FDCAN_HandleTypeDef hfdcan1;
+extern MDMA_HandleTypeDef mdma;
+extern QSPI_HandleTypeDef hqspi;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -241,5 +243,17 @@ void FDCAN_CAL_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+
+void MDMA_IRQHandler(void){
+
+  HAL_MDMA_IRQHandler(&mdma);
+
+}
+
+void QUADSPI_IRQHandler(void){
+
+  HAL_QSPI_IRQHandler(&hqspi);
+
+}
 
 /* USER CODE END 1 */
