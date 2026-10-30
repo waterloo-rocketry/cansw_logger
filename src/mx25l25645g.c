@@ -12,6 +12,8 @@
 
 #define MX25L25645G_WIP_MASK 0x01U
 
+static mx25l25645g_t *active_flash = NULL;
+
 // TODO: return certain status
 void mx25l25645g_init(mx25l25645g_t *flash, QSPI_HandleTypeDef *hqspi, GPIO_TypeDef *cs_port, uint16_t cs_pin){
 
@@ -192,5 +194,146 @@ void mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
 	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U);
 
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+
+}
+
+void mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
+
+	QSPI_CommandTypeDef command_wren = {0};
+	uint8_t status_reg = 0U;
+
+    command_wren.Instruction = MX25L25645G_CMD_WRITE_ENABLE;
+    command_wren.DataMode = QSPI_DATA_NONE;
+    command_wren.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+    command_wren.AddressMode = QSPI_ADDRESS_NONE;
+    command_wren.NbData = 0U;
+
+	QSPI_CommandTypeDef command_rdsr = {0};
+
+	command_rdsr.Instruction = MX25L25645G_CMD_READ_STATUS;
+	command_rdsr.DataMode = QSPI_DATA_4_LINES;
+	command_rdsr.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+	command_rdsr.AddressMode = QSPI_ADDRESS_NONE;
+	command_rdsr.NbData = 1U;
+
+	QSPI_CommandTypeDef command_write = {0};
+
+	command_write.Instruction = MX25L25645G_CMD_PAGE_PROGRAM;
+	command_write.DataMode = QSPI_DATA_4_LINES;
+	command_write.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+	command_write.AddressMode = QSPI_ADDRESS_4_LINES;
+	command_write.NbData = size;
+	command_write.AddressSize = QSPI_ADDRESS_24_BITS;
+	command_write.Address = address; 
+
+	active_flash = flash;
+	active_flash->buffer = data;
+	active_flash->tx_in_progress = true;
+
+	/* Write enable */
+	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
+	HAL_QSPI_Command(flash->hqspi, &command_wren, 100U);
+	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+
+	/* Page program */
+	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
+	HAL_QSPI_Command(flash->hqspi, &command_write, 100U);
+	HAL_QSPI_Transmit_DMA(flash->hqspi, data);
+
+}
+
+void mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
+
+	QSPI_CommandTypeDef command_read = {0};
+
+	command_read.Instruction = MX25L25645G_CMD_4READ;
+	command_read.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+	command_read.Address = address;
+	command_read.AddressSize = QSPI_ADDRESS_24_BITS;
+	command_read.AddressMode = QSPI_ADDRESS_4_LINES;
+	command_read.DataMode = QSPI_DATA_4_LINES;
+	command_read.DummyCycles = 4U;
+	command_read.AlternateBytes = 1U;
+	command_read.AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES;
+	command_read.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
+	command_read.NbData = size; 
+
+	active_flash = flash;
+	active_flash->buffer = data;
+	active_flash->rx_in_progress = true;
+	
+	/* Read */
+	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
+	HAL_QSPI_Command(flash->hqspi, &command_read, 100U);
+	HAL_QSPI_Receive_DMA(flash->hqspi, data);
+
+}
+
+mx25l25645g_status_t mx25l25645g_check_programming(mx25l25645g_t *flash){
+
+	if (flash->tx_in_progress){
+		return MX25L25645G_STATUS_BUSY;
+	}
+
+	QSPI_CommandTypeDef command_rdsr = {0};
+	uint8_t status_reg = 0U;
+
+	command_rdsr.Instruction = MX25L25645G_CMD_READ_STATUS;
+	command_rdsr.DataMode = QSPI_DATA_4_LINES;
+	command_rdsr.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+	command_rdsr.AddressMode = QSPI_ADDRESS_NONE;
+	command_rdsr.NbData = 1U;
+
+	if (HAL_QSPI_Command(flash->hqspi, &command_rdsr, 100U) != HAL_OK){
+		return MX25L25645G_STATUS_ERROR;
+	}
+
+	if (HAL_QSPI_Receive(flash->hqspi, &status_reg, 100U) != HAL_OK){
+		return MX25L25645G_STATUS_ERROR;
+	}
+
+	if ((status_reg & MX25L25645G_WIP_MASK) != 0U){
+		return MX25L25645G_STATUS_BUSY;
+	}
+
+	return MX25L25645G_STATUS_OK;
+}
+
+void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi){
+
+	if (active_flash == NULL){
+		return;
+	}
+
+	HAL_GPIO_WritePin(active_flash->cs_port, active_flash->cs_pin, GPIO_PIN_SET);
+
+	active_flash->buffer = NULL;
+	active_flash->rx_in_progress = false;
+	active_flash = NULL;
+
+}
+
+void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi){
+	
+	if (active_flash == NULL){
+		return;
+	}
+
+	HAL_GPIO_WritePin(active_flash->cs_port, active_flash->cs_pin, GPIO_PIN_SET);
+
+	active_flash->buffer = NULL;
+	active_flash->tx_in_progress = false;
+	active_flash = NULL;
+
+}
+
+void HAL_QSPI_ErrorCallback(QSPI_HandleTypeDef *hqspi){
+
+	HAL_GPIO_WritePin(active_flash->cs_port, active_flash->cs_pin, GPIO_PIN_SET);
+
+	active_flash->buffer = NULL;
+	active_flash->tx_in_progress = false;
+	active_flash->rx_in_progress = false;
+	active_flash = NULL;
 
 }
