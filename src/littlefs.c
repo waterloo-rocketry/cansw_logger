@@ -6,7 +6,11 @@ extern mx25l25645g_t flash;
 int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size){
     
     uint32_t address = block * c->block_size + off;
-    mx25l25645g_quad_read(&flash, (uint8_t *)buffer, address, size);
+    mx25l25645g_quad_read_dma(&flash, (uint8_t *)buffer, address, size);
+
+    while(flash.rx_in_progress){
+        // TODO: Do something useful here
+    }
 
     return 0;
 }
@@ -14,7 +18,24 @@ int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
 int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size){
 
     uint32_t address = block * c->block_size + off;
-    mx25l25645g_write(&flash, (uint8_t *)buffer, address, size);
+    mx25l25645g_write_dma(&flash, (uint8_t *)buffer, address, size);
+
+    while(flash.tx_in_progress){}
+
+    for (;;) {
+        mx25l25645g_status_t status = mx25l25645g_check_programming(&flash);
+
+        if (status == MX25L25645G_STATUS_OK) {
+            break;
+        }
+
+        if (status == MX25L25645G_STATUS_ERROR) {
+            return LFS_ERR_IO;
+        }
+
+        // busy, so check again
+        // TODO: Do something useful here
+    }
 
     return 0;
 }
