@@ -381,6 +381,23 @@ mx25l25645g_status_t mx25l25645g_check_programming(mx25l25645g_t *flash){
 	return MX25L25645G_STATUS_OK;
 }
 
+w_status_t mx25l25645g_abort(mx25l25645g_t *flash){
+
+	if (HAL_QSPI_Abort(flash->hqspi) != HAL_OK){
+		return W_FAILURE;
+	}
+
+    HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+
+	flash->buffer = NULL;
+	flash->tx_in_progress = false;
+	flash->rx_in_progress = false;
+	flash->txrx_failed = true;
+	active_flash = NULL;
+
+	return W_SUCCESS;
+}
+
 void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi){
 
 	if (active_flash == NULL){
