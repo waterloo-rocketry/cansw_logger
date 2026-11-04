@@ -6,10 +6,13 @@ extern mx25l25645g_t flash;
 int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size){
     
     uint32_t address = block * c->block_size + off;
-    mx25l25645g_quad_read_dma(&flash, (uint8_t *)buffer, address, size);
+    
+    if (mx25l25645g_quad_read_dma(&flash, (uint8_t *)buffer, address, size) != W_SUCCESS){
+        return LFS_ERR_IO;
+    }
 
-    while(flash.rx_in_progress){
-        // TODO: Do something useful here
+    while (flash.rx_in_progress){
+        // TODO: add loop timeout
     }
 
     return 0;
@@ -18,9 +21,12 @@ int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
 int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size){
 
     uint32_t address = block * c->block_size + off;
-    mx25l25645g_write_dma(&flash, (uint8_t *)buffer, address, size);
 
-    while(flash.tx_in_progress){}
+    if (mx25l25645g_write_dma(&flash, (uint8_t *)buffer, address, size) != W_SUCCESS){
+        return LFS_ERR_IO;
+    }
+
+    while (flash.tx_in_progress){}
 
     for (;;) {
         mx25l25645g_status_t status = mx25l25645g_check_programming(&flash);
@@ -34,7 +40,7 @@ int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
         }
 
         // busy, so check again
-        // TODO: Do something useful here
+        // TODO: add loop timeout
     }
 
     return 0;
@@ -43,7 +49,10 @@ int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
 int lfs_flash_erase(const struct lfs_config *c, lfs_block_t block){
 
     uint32_t address = block * c->block_size;
-    mx25l25645g_erase_sector(&flash, address);
+
+    if (mx25l25645g_erase_sector(&flash, address) != W_SUCCESS){
+        return LFS_ERR_IO;
+    }
 
     return 0;
 }

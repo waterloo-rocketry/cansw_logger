@@ -14,10 +14,7 @@
 
 static mx25l25645g_t *active_flash = NULL;
 
-// TODO: return certain status
-void mx25l25645g_init(mx25l25645g_t *flash, QSPI_HandleTypeDef *hqspi, GPIO_TypeDef *cs_port, uint16_t cs_pin){
-
-	HAL_StatusTypeDef flash_status;
+w_status_t mx25l25645g_init(mx25l25645g_t *flash, QSPI_HandleTypeDef *hqspi, GPIO_TypeDef *cs_port, uint16_t cs_pin){
 
     flash->cs_pin = cs_pin;
     flash->cs_port = cs_port;
@@ -42,18 +39,35 @@ void mx25l25645g_init(mx25l25645g_t *flash, QSPI_HandleTypeDef *hqspi, GPIO_Type
 
 	/* Enable 4 lines */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_eqio, 100U);
+
+	if (HAL_QSPI_Command(flash->hqspi, &command_eqio, 100U) != HAL_OK){
+
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
+
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
 	/* Read */
     HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-    HAL_QSPI_Command(flash->hqspi, &command, 100U);
-    HAL_QSPI_Receive(flash->hqspi, received, 100U);
+
+    if (HAL_QSPI_Command(flash->hqspi, &command, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
+
+	if (HAL_QSPI_Receive(flash->hqspi, received, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
+
     HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+
+	return W_SUCCESS;
 }
 
 
-void mx25l25645g_read(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
+w_status_t mx25l25645g_read(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
 
 	QSPI_CommandTypeDef command_read = {0};
 
@@ -67,13 +81,20 @@ void mx25l25645g_read(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uin
 
 	/* Read */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_read, 100U);
-	HAL_QSPI_Receive(flash->hqspi, data, 100U);
+	if (HAL_QSPI_Command(flash->hqspi, &command_read, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
+	if (HAL_QSPI_Receive(flash->hqspi, data, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
+	return W_SUCCESS;
 }
 
-void mx25l25645g_quad_read(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
+w_status_t mx25l25645g_quad_read(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
 
 	QSPI_CommandTypeDef command_read = {0};
 
@@ -91,13 +112,20 @@ void mx25l25645g_quad_read(mx25l25645g_t *flash, uint8_t *data, uint32_t address
 
 	/* Read */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_read, 100U);
-	HAL_QSPI_Receive(flash->hqspi, data, 100U);
+	if (HAL_QSPI_Command(flash->hqspi, &command_read, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
+	if (HAL_QSPI_Receive(flash->hqspi, data, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
+	return W_SUCCESS;
 }
 
-void mx25l25645g_write(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
+w_status_t mx25l25645g_write(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
 
 	QSPI_CommandTypeDef command_wren = {0};
 	uint8_t status_reg = 0U;
@@ -128,27 +156,43 @@ void mx25l25645g_write(mx25l25645g_t *flash, uint8_t *data, uint32_t address, ui
 
 	/* Write enable */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_wren, 100U);
+	if (HAL_QSPI_Command(flash->hqspi, &command_wren, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
 	/* Page program */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_write, 100U);
-	HAL_QSPI_Transmit(flash->hqspi, data, 100U);
+	if (HAL_QSPI_Command(flash->hqspi, &command_write, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
+	if (HAL_QSPI_Transmit(flash->hqspi, data, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
 	/* Wait until WIP = 0 */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
 	do {
-		HAL_QSPI_Command(flash->hqspi, &command_rdsr, 100U);
-		HAL_QSPI_Receive(flash->hqspi, &status_reg, 100U);
+		if (HAL_QSPI_Command(flash->hqspi, &command_rdsr, 100U) != HAL_OK){
+			HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+			return W_FAILURE;
+		}
+		if (HAL_QSPI_Receive(flash->hqspi, &status_reg, 100U) != HAL_OK){
+			HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+			return W_FAILURE;
+		}
 	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U);
 
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
+	return W_SUCCESS;
 }
 
-void mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
+w_status_t mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
 
 	QSPI_CommandTypeDef command_wren = {0};
 	uint8_t status_reg = 0U;
@@ -179,25 +223,38 @@ void mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
 
 	/* Write enable */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_wren, 100U);
+	if (HAL_QSPI_Command(flash->hqspi, &command_wren, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
 	/* Sector erase */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_sector_erase, 100U);
+	if (HAL_QSPI_Command(flash->hqspi, &command_sector_erase, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		return W_FAILURE;
+	}
 
 	/* Wait until WIP = 0 */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
 	do {
-		HAL_QSPI_Command(flash->hqspi, &command_rdsr, 100U);
-		HAL_QSPI_Receive(flash->hqspi, &status_reg, 100U);
+		if (HAL_QSPI_Command(flash->hqspi, &command_rdsr, 100U) != HAL_OK){
+			HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+			return W_FAILURE;
+		}
+		if (HAL_QSPI_Receive(flash->hqspi, &status_reg, 100U) != HAL_OK){
+			HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+			return W_FAILURE;
+		}
 	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U);
 
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
+	return W_SUCCESS;
 }
 
-void mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
+w_status_t mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
 
 	QSPI_CommandTypeDef command_wren = {0};
 	uint8_t status_reg = 0U;
@@ -232,17 +289,36 @@ void mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address
 
 	/* Write enable */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_wren, 100U);
+	if (HAL_QSPI_Command(flash->hqspi, &command_wren, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		flash->buffer = NULL;
+		flash->tx_in_progress = false;
+		active_flash = NULL;
+		return W_FAILURE;
+	}
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
 	/* Page program */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_write, 100U);
-	HAL_QSPI_Transmit_DMA(flash->hqspi, data);
+	if (HAL_QSPI_Command(flash->hqspi, &command_write, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		flash->buffer = NULL;
+		flash->tx_in_progress = false;
+		active_flash = NULL;
+		return W_FAILURE;
+	}
+	if (HAL_QSPI_Transmit_DMA(flash->hqspi, data) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		flash->buffer = NULL;
+		flash->tx_in_progress = false;
+		active_flash = NULL;
+		return W_FAILURE;
+	}
 
+	return W_SUCCESS;
 }
 
-void mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
+w_status_t mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
 
 	QSPI_CommandTypeDef command_read = {0};
 
@@ -264,9 +340,22 @@ void mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t add
 	
 	/* Read */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-	HAL_QSPI_Command(flash->hqspi, &command_read, 100U);
-	HAL_QSPI_Receive_DMA(flash->hqspi, data);
+	if (HAL_QSPI_Command(flash->hqspi, &command_read, 100U) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		flash->buffer = NULL;
+		flash->rx_in_progress = false;
+		active_flash = NULL;
+		return W_FAILURE;
+	}
+	if (HAL_QSPI_Receive_DMA(flash->hqspi, data) != HAL_OK){
+		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+		flash->buffer = NULL;
+		flash->rx_in_progress = false;
+		active_flash = NULL;
+		return W_FAILURE;
+	}
 
+	return W_SUCCESS;
 }
 
 mx25l25645g_status_t mx25l25645g_check_programming(mx25l25645g_t *flash){
