@@ -78,7 +78,6 @@ bool green_led_on = true;
 
 void fwmain(void) {
 
-	int status;
 	stm32h7_can_init(&hfdcan1, can_callback_function);
 	mdma_init();
 	mx25l25645g_init(&flash, &hqspi, GPIOB, GPIO_PIN_10);

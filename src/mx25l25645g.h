@@ -9,6 +9,7 @@ typedef struct {
     uint8_t *buffer;
     volatile bool tx_in_progress;
     volatile bool rx_in_progress;
+    volatile bool txrx_failed;
 
 } mx25l25645g_t;
 

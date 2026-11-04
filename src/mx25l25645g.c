@@ -257,21 +257,12 @@ w_status_t mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
 w_status_t mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size){
 
 	QSPI_CommandTypeDef command_wren = {0};
-	uint8_t status_reg = 0U;
 
     command_wren.Instruction = MX25L25645G_CMD_WRITE_ENABLE;
     command_wren.DataMode = QSPI_DATA_NONE;
     command_wren.InstructionMode = QSPI_INSTRUCTION_4_LINES;
     command_wren.AddressMode = QSPI_ADDRESS_NONE;
     command_wren.NbData = 0U;
-
-	QSPI_CommandTypeDef command_rdsr = {0};
-
-	command_rdsr.Instruction = MX25L25645G_CMD_READ_STATUS;
-	command_rdsr.DataMode = QSPI_DATA_4_LINES;
-	command_rdsr.InstructionMode = QSPI_INSTRUCTION_4_LINES;
-	command_rdsr.AddressMode = QSPI_ADDRESS_NONE;
-	command_rdsr.NbData = 1U;
 
 	QSPI_CommandTypeDef command_write = {0};
 
@@ -286,6 +277,7 @@ w_status_t mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t a
 	active_flash = flash;
 	active_flash->buffer = data;
 	active_flash->tx_in_progress = true;
+	active_flash->txrx_failed = false;
 
 	/* Write enable */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
@@ -337,6 +329,7 @@ w_status_t mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32
 	active_flash = flash;
 	active_flash->buffer = data;
 	active_flash->rx_in_progress = true;
+	active_flash->txrx_failed = false;
 	
 	/* Read */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
@@ -423,6 +416,7 @@ void HAL_QSPI_ErrorCallback(QSPI_HandleTypeDef *hqspi){
 	active_flash->buffer = NULL;
 	active_flash->tx_in_progress = false;
 	active_flash->rx_in_progress = false;
+	active_flash->txrx_failed = true;
 	active_flash = NULL;
 
 }
