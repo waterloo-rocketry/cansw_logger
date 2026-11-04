@@ -15,6 +15,11 @@ int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
         // TODO: add loop timeout
     }
 
+    if (flash.txrx_failed){
+        flash.txrx_failed = false;
+        return LFS_ERR_IO;
+    }
+
     return 0;
 }
 
@@ -27,6 +32,11 @@ int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
     }
 
     while (flash.tx_in_progress){}
+
+    if (flash.txrx_failed){
+        flash.txrx_failed = false;
+        return LFS_ERR_IO;
+    }
 
     for (;;) {
         mx25l25645g_status_t status = mx25l25645g_check_programming(&flash);
