@@ -1,7 +1,11 @@
 #include "lfs.h"
 #include "mx25l25645g.h"
+#include "platform.h"
+
+#define FLASH_TIMEOUT_MS 100U
 
 extern mx25l25645g_t flash;
+
 
 int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size){
     
@@ -11,8 +15,15 @@ int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
         return LFS_ERR_IO;
     }
 
+    uint32_t time_start = millis();
+
     while (flash.rx_in_progress){
-        // TODO: add loop timeout
+        if (millis() - time_start >= FLASH_TIMEOUT_MS){
+            
+            // TODO: handle failed abort
+            mx25l25645g_abort(&flash);
+            return LFS_ERR_IO;
+        }
     }
 
     if (flash.txrx_failed){
@@ -31,12 +42,23 @@ int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
         return LFS_ERR_IO;
     }
 
-    while (flash.tx_in_progress){}
+    uint32_t time_start = millis();
+
+    while (flash.tx_in_progress){
+        if (millis() - time_start >= FLASH_TIMEOUT_MS){
+            
+            // TODO: handle failed abort
+            mx25l25645g_abort(&flash);
+            return LFS_ERR_IO;
+        }
+    }
 
     if (flash.txrx_failed){
         flash.txrx_failed = false;
         return LFS_ERR_IO;
     }
+
+    time_start = millis();
 
     for (;;) {
         mx25l25645g_status_t status = mx25l25645g_check_programming(&flash);
@@ -49,8 +71,11 @@ int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
             return LFS_ERR_IO;
         }
 
+        if (millis() - time_start >= FLASH_TIMEOUT_MS){
+            return LFS_ERR_IO;
+        }
+
         // busy, so check again
-        // TODO: add loop timeout
     }
 
     return 0;
