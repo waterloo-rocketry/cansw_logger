@@ -59,7 +59,8 @@ void FDCAN1_IT0_IRQHandler(void);
 void FDCAN1_IT1_IRQHandler(void);
 void FDCAN_CAL_IRQHandler(void);
 /* USER CODE BEGIN EFP */
-
+void MDMA_IRQHandler(void);
+void QUADSPI_IRQHandler(void);
 /* USER CODE END EFP */
 
 #ifdef __cplusplus
