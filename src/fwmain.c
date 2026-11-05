@@ -1,6 +1,7 @@
-#include "canlib.h"
-#include "main.h"
+#include "rocketlib.h"
+#include "stm32h7/stm32h7_can.h"
 
+#include "main.h"
 #include "fs.h"
 #include "health_check.h"
 #include "log.h"
