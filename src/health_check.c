@@ -1,8 +1,8 @@
 #include "rocketlib.h"
 #include "stm32h7/stm32h7_can.h"
 
-#include "main.h"
 #include "health_check.h"
+#include "main.h"
 #include "platform.h"
 
 extern ADC_HandleTypeDef hadc1; // Vin Current Sense

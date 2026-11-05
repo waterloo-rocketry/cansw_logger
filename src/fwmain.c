@@ -1,10 +1,10 @@
 #include "rocketlib.h"
 #include "stm32h7/stm32h7_can.h"
 
-#include "main.h"
 #include "fs.h"
 #include "health_check.h"
 #include "log.h"
+#include "main.h"
 #include "platform.h"
 
 #define BOARD_HEARTBEAT_PERIOD 500
@@ -46,8 +46,8 @@ void fwmain(void) {
 			can_msg_t msg;
 			uint32_t general_error_code = health_check();
 			HAL_Delay(20); // FIXME cannot transmit 3 messages back to back workaround
-			build_general_board_status_msg(
-				PRIO_HIGH, millis(), general_error_code | (1 << E_FS_ERROR_OFFSET), &msg);
+			build_general_board_status_msg(PRIO_HIGH, millis(),
+			                               general_error_code | (1 << E_FS_ERROR_OFFSET), &msg);
 			stm32h7_can_send(&msg);
 			HAL_Delay(500);
 		}
@@ -67,12 +67,14 @@ void fwmain(void) {
 			build_general_board_status_msg(PRIO_HIGH, millis(), general_error_code, &msg);
 			stm32h7_can_send(&msg);
 
-			build_analog_sensor_32bit_msg(PRIO_LOW, millis(), SENSOR_LOG_WRITTEN_SIZE, fs_get_log_written_size(), &msg);
+			build_analog_sensor_32bit_msg(PRIO_LOW, millis(), SENSOR_LOG_WRITTEN_SIZE,
+			                              fs_get_log_written_size(), &msg);
 			stm32h7_can_send(&msg);
 
 			HAL_Delay(20); // FIXME cannot transmit 3 messages back to back workaround
 
-			build_analog_sensor_32bit_msg(PRIO_LOW, millis(), SENSOR_SD_LOG_FILE_NAME, fs_get_sd_log_file_name(), &msg);
+			build_analog_sensor_32bit_msg(PRIO_LOW, millis(), SENSOR_SD_LOG_FILE_NAME,
+			                              fs_get_sd_log_file_name(), &msg);
 			stm32h7_can_send(&msg);
 
 			if (green_led_on) {

@@ -4,9 +4,9 @@
 #include "fatfs.h"
 #include "rocketlib.h"
 
-#include "main.h"
 #include "fs.h"
 #include "log.h"
+#include "main.h"
 #include "platform.h"
 
 extern SD_HandleTypeDef hsd1;
@@ -32,12 +32,8 @@ static void fs_new_file(void) {
 
 	// Choose file name
 	char log_filename[100];
-	sprintf(
-		log_filename,
-		"dir_%04lu/log_%04lu.bin",
-		index_counter / MAX_FILE_PER_DIR,
-		index_counter % MAX_FILE_PER_DIR
-	);
+	sprintf(log_filename, "dir_%04lu/log_%04lu.bin", index_counter / MAX_FILE_PER_DIR,
+	        index_counter % MAX_FILE_PER_DIR);
 
 	++index_counter;
 
@@ -95,7 +91,7 @@ uint32_t fs_get_sd_log_file_name(void) {
 }
 
 uint32_t fs_get_error(void) {
-	if(fs_result != FR_OK) {
+	if (fs_result != FR_OK) {
 		return 1 << E_FS_ERROR_OFFSET;
 	}
 	return 0;
