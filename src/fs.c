@@ -21,7 +21,7 @@ static uint32_t page_counter = 0;
 static FRESULT fs_result = FR_OK;
 
 static void fs_new_file(void) {
-	unsigned int retval;
+	unsigned int retval = 0;
 
 	// Create directory as nessary
 	if ((index_counter % MAX_FILE_PER_DIR) == 0) {
@@ -49,7 +49,7 @@ static void fs_new_file(void) {
 }
 
 w_status_t fs_init(void) {
-	unsigned int retval;
+	unsigned int retval = 0;
 
 	if (f_mount(&fatfs, "", 0) != FR_OK) {
 		return W_IO_ERROR;
