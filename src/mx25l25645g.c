@@ -280,7 +280,12 @@ w_status_t mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t a
 	command_write.AddressSize = QSPI_ADDRESS_32_BITS;
 	command_write.Address = address; 
 
-	active_flash = flash;
+	if (active_flash == NULL){
+		active_flash = flash;
+	} else {
+		return W_FAILURE;
+	}
+
 	active_flash->buffer = data;
 	active_flash->tx_in_progress = true;
 	active_flash->txrx_failed = false;
@@ -332,7 +337,12 @@ w_status_t mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32
 	command_read.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
 	command_read.NbData = size; 
 
-	active_flash = flash;
+	if (active_flash == NULL){
+		active_flash = flash;
+	} else {
+		return W_FAILURE;
+	}
+	
 	active_flash->buffer = data;
 	active_flash->rx_in_progress = true;
 	active_flash->txrx_failed = false;
