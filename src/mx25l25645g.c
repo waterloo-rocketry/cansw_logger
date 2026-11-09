@@ -179,7 +179,7 @@ w_status_t mx25l25645g_write(mx25l25645g_t *flash, uint8_t *data, uint32_t addre
 			HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 			return W_FAILURE;
 		}
-	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U && millis() - start_ms <= MX25L25645G_PAGE_PROGRAM_TIMEOUT_MS);
+	} while (((status_reg & MX25L25645G_WIP_MASK) != 0U) && (millis() - start_ms <= MX25L25645G_PAGE_PROGRAM_TIMEOUT_MS));
 
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
@@ -248,7 +248,7 @@ w_status_t mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
 			HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 			return W_FAILURE;
 		}
-	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U && millis() - start_ms <= MX25L25645G_SECTOR_ERASE_TIMEOUT_MS);
+	} while (((status_reg & MX25L25645G_WIP_MASK) != 0U) && (millis() - start_ms <= MX25L25645G_SECTOR_ERASE_TIMEOUT_MS));
 
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
@@ -412,6 +412,18 @@ w_status_t mx25l25645g_abort(mx25l25645g_t *flash){
 	active_flash = NULL;
 
 	return W_SUCCESS;
+}
+
+bool mx25l25645g_rx_in_progress(mx25l25645g_t *flash){
+	return flash->rx_in_progress;
+}
+
+bool mx25l25645g_tx_in_progress(mx25l25645g_t *flash){
+	return flash->tx_in_progress;
+}
+
+bool mx25l25645g_txrx_failed(mx25l25645g_t *flash){
+	return flash->txrx_failed;
 }
 
 void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi){

@@ -22,7 +22,7 @@ static int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off
 
     uint32_t time_start = millis();
 
-    while (flash.rx_in_progress){
+    while (mx25l25645g_rx_in_progress(&flash)){
         if (millis() - time_start >= FLASH_TIMEOUT_MS){
             
             // TODO: handle failed abort
@@ -31,8 +31,7 @@ static int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off
         }
     }
 
-    if (flash.txrx_failed){
-        flash.txrx_failed = false;
+    if (mx25l25645g_txrx_failed(&flash)){
         return LFS_ERR_IO;
     }
 
@@ -49,7 +48,7 @@ static int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off
 
     uint32_t time_start = millis();
 
-    while (flash.tx_in_progress){
+    while (mx25l25645g_tx_in_progress(&flash)){
         if (millis() - time_start >= FLASH_TIMEOUT_MS){
             
             // TODO: handle failed abort
@@ -58,8 +57,7 @@ static int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off
         }
     }
 
-    if (flash.txrx_failed){
-        flash.txrx_failed = false;
+    if (mx25l25645g_txrx_failed(&flash)){
         return LFS_ERR_IO;
     }
 

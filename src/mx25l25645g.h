@@ -65,3 +65,18 @@ mx25l25645g_status_t mx25l25645g_check_programming(mx25l25645g_t *flash);
  * @brief aborts the current qspi transfer
  */
 w_status_t mx25l25645g_abort(mx25l25645g_t *flash);
+
+/**
+ * @brief returns the status of rx_in_progress
+ */
+bool mx25l25645g_rx_in_progress(mx25l25645g_t *flash);
+
+/**
+ * @brief returns the status of tx_in_progress
+ */
+bool mx25l25645g_tx_in_progress(mx25l25645g_t *flash);
+
+/**
+ * @brief returns the status of txrx_failed
+ */
+bool mx25l25645g_txrx_failed(mx25l25645g_t *flash);
