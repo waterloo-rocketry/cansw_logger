@@ -80,9 +80,8 @@ void fwmain(void) {
 
 	stm32h7_can_init(&hfdcan1, can_callback_function);
 	mdma_init();
-	mx25l25645g_init(&flash, &hqspi, GPIOB, GPIO_PIN_10);
 	
-	if (fs_init() != W_SUCCESS) { // Filesystem Init Failed
+	if (mx25l25645g_init(&flash, &hqspi, GPIOB, GPIO_PIN_10) != W_SUCCESS || fs_init() != W_SUCCESS) { // Filesystem Init Failed
 		for (;;) {
 			can_msg_t msg;
 			uint32_t general_error_code = health_check();

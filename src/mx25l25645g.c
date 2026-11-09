@@ -1,5 +1,6 @@
 #include "stm32h7xx_hal.h"
 #include "mx25l25645g.h"
+#include "platform.h"
 
 #define MX25L25645G_CMD_WRITE_ENABLE 0x06U
 #define MX25L25645G_CMD_READ_STATUS 0x05U
@@ -9,10 +10,13 @@
 #define MX25L25645G_CMD_RDID 0xAFU
 #define MX25L25645G_CMD_READ 0x03U
 #define MX25L25645G_CMD_4READ 0xEBU
+#define MX25L25645G_CMD_EN4B 0xB7U
 
 #define MX25L25645G_WIP_MASK 0x01U
 
 #define MX25L25645G_QSPI_TIMEOUT_MS 100U
+#define MX25L25645G_SECTOR_ERASE_TIMEOUT_MS 600U /* max sector erase cycle time is 400 ms, from datasheet (14) */
+#define MX25L25645G_PAGE_PROGRAM_TIMEOUT_MS 10U /* max page program time is 0.75 ms */
 
 static mx25l25645g_t *active_flash = NULL;
 
@@ -29,15 +33,26 @@ w_status_t mx25l25645g_init(mx25l25645g_t *flash, QSPI_HandleTypeDef *hqspi, GPI
 	command_eqio.DataMode = QSPI_DATA_NONE;
 	command_eqio.InstructionMode = QSPI_INSTRUCTION_1_LINE;
 
+	QSPI_CommandTypeDef command_en4b = {0};
+	command_en4b.AddressMode = QSPI_ADDRESS_NONE;
+	command_en4b.Instruction = MX25L25645G_CMD_EN4B;
+	command_en4b.DataMode = QSPI_DATA_NONE;
+	command_en4b.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+
 	/* Enable 4 lines */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
-
 	if (HAL_QSPI_Command(flash->hqspi, &command_eqio, MX25L25645G_QSPI_TIMEOUT_MS) != HAL_OK){
 
 		HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 		return W_FAILURE;
 	}
+	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
+	/* Enable 4 byte address mode */
+	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
+	if (HAL_QSPI_Command(hqspi, &command_en4b, MX25L25645G_QSPI_TIMEOUT_MS) != HAL_OK) {
+    	return W_FAILURE;
+	}
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
 	return W_SUCCESS;
@@ -51,7 +66,7 @@ w_status_t mx25l25645g_read(mx25l25645g_t *flash, uint8_t *data, uint32_t addres
 	command_read.Instruction = MX25L25645G_CMD_READ;
 	command_read.InstructionMode = QSPI_INSTRUCTION_1_LINE;
 	command_read.Address = address;
-	command_read.AddressSize = QSPI_ADDRESS_24_BITS;
+	command_read.AddressSize = QSPI_ADDRESS_32_BITS;
 	command_read.AddressMode = QSPI_ADDRESS_1_LINE;
 	command_read.DataMode = QSPI_DATA_1_LINE;
 	command_read.NbData = size; 
@@ -78,7 +93,7 @@ w_status_t mx25l25645g_quad_read(mx25l25645g_t *flash, uint8_t *data, uint32_t a
 	command_read.Instruction = MX25L25645G_CMD_4READ;
 	command_read.InstructionMode = QSPI_INSTRUCTION_4_LINES;
 	command_read.Address = address;
-	command_read.AddressSize = QSPI_ADDRESS_24_BITS;
+	command_read.AddressSize = QSPI_ADDRESS_32_BITS;
 	command_read.AddressMode = QSPI_ADDRESS_4_LINES;
 	command_read.DataMode = QSPI_DATA_4_LINES;
 	command_read.DummyCycles = 4U;
@@ -128,7 +143,7 @@ w_status_t mx25l25645g_write(mx25l25645g_t *flash, uint8_t *data, uint32_t addre
 	command_write.InstructionMode = QSPI_INSTRUCTION_4_LINES;
 	command_write.AddressMode = QSPI_ADDRESS_4_LINES;
 	command_write.NbData = size;
-	command_write.AddressSize = QSPI_ADDRESS_24_BITS;
+	command_write.AddressSize = QSPI_ADDRESS_32_BITS;
 	command_write.Address = address; 
 
 	/* Write enable */
@@ -151,6 +166,8 @@ w_status_t mx25l25645g_write(mx25l25645g_t *flash, uint8_t *data, uint32_t addre
 	}
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 
+	uint32_t start_ms = millis();
+
 	/* Wait until WIP = 0 */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
 	do {
@@ -162,9 +179,14 @@ w_status_t mx25l25645g_write(mx25l25645g_t *flash, uint8_t *data, uint32_t addre
 			HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 			return W_FAILURE;
 		}
-	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U);
+	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U && millis() - start_ms <= MX25L25645G_PAGE_PROGRAM_TIMEOUT_MS);
 
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+
+	/* the polling loop timed out */
+	if ((status_reg & MX25L25645G_WIP_MASK) != 0U){
+		return W_FAILURE;
+	}
 
 	return W_SUCCESS;
 }
@@ -195,7 +217,7 @@ w_status_t mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
 	command_sector_erase.InstructionMode = QSPI_INSTRUCTION_4_LINES;
 	command_sector_erase.NbData = 0U;
 	command_sector_erase.Address = address;
-	command_sector_erase.AddressSize = QSPI_ADDRESS_24_BITS;
+	command_sector_erase.AddressSize = QSPI_ADDRESS_32_BITS;
 	command_sector_erase.AddressMode = QSPI_ADDRESS_4_LINES;
 
 	/* Write enable */
@@ -213,6 +235,8 @@ w_status_t mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
 		return W_FAILURE;
 	}
 
+	uint32_t start_ms = millis();
+		
 	/* Wait until WIP = 0 */
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_RESET);
 	do {
@@ -224,9 +248,14 @@ w_status_t mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address){
 			HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
 			return W_FAILURE;
 		}
-	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U);
+	} while ((status_reg & MX25L25645G_WIP_MASK) != 0U && millis() - start_ms <= MX25L25645G_SECTOR_ERASE_TIMEOUT_MS);
 
 	HAL_GPIO_WritePin(flash->cs_port, flash->cs_pin, GPIO_PIN_SET);
+
+	/* the polling loop timed out */
+	if ((status_reg & MX25L25645G_WIP_MASK) != 0U){
+		return W_FAILURE;
+	}
 
 	return W_SUCCESS;
 }
@@ -248,7 +277,7 @@ w_status_t mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t a
 	command_write.InstructionMode = QSPI_INSTRUCTION_4_LINES;
 	command_write.AddressMode = QSPI_ADDRESS_4_LINES;
 	command_write.NbData = size;
-	command_write.AddressSize = QSPI_ADDRESS_24_BITS;
+	command_write.AddressSize = QSPI_ADDRESS_32_BITS;
 	command_write.Address = address; 
 
 	active_flash = flash;
@@ -294,7 +323,7 @@ w_status_t mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32
 	command_read.Instruction = MX25L25645G_CMD_4READ;
 	command_read.InstructionMode = QSPI_INSTRUCTION_4_LINES;
 	command_read.Address = address;
-	command_read.AddressSize = QSPI_ADDRESS_24_BITS;
+	command_read.AddressSize = QSPI_ADDRESS_32_BITS;
 	command_read.AddressMode = QSPI_ADDRESS_4_LINES;
 	command_read.DataMode = QSPI_DATA_4_LINES;
 	command_read.DummyCycles = 4U;

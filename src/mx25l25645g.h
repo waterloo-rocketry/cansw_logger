@@ -47,12 +47,12 @@ w_status_t mx25l25645g_erase_sector(mx25l25645g_t *flash, uint32_t address);
 w_status_t mx25l25645g_quad_read(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size);
 
 /**
- * @brief start a dma write
+ * @brief Starts a DMA write, sets tx_in_progress = true while the transfer is ongoing
  */
 w_status_t mx25l25645g_write_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size);
 
 /**
- * @brief start a dma read
+ * @brief Starts a DMA read, sets rx_in_progress = true while the transfer is ongoing
  */
 w_status_t mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32_t address, uint32_t size);
 
@@ -60,3 +60,8 @@ w_status_t mx25l25645g_quad_read_dma(mx25l25645g_t *flash, uint8_t *data, uint32
  * @brief check programming
  */
 mx25l25645g_status_t mx25l25645g_check_programming(mx25l25645g_t *flash);
+
+/**
+ * @brief aborts the current qspi transfer
+ */
+w_status_t mx25l25645g_abort(mx25l25645g_t *flash);
