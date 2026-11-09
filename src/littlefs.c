@@ -7,7 +7,7 @@
 extern mx25l25645g_t flash;
 
 
-int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size){
+static int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size){
     
     uint32_t address = block * c->block_size + off;
     
@@ -34,7 +34,7 @@ int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
     return 0;
 }
 
-int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size){
+static int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size){
 
     uint32_t address = block * c->block_size + off;
 
@@ -81,7 +81,7 @@ int lfs_flash_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off,
     return 0;
 }
 
-int lfs_flash_erase(const struct lfs_config *c, lfs_block_t block){
+static int lfs_flash_erase(const struct lfs_config *c, lfs_block_t block){
 
     uint32_t address = block * c->block_size;
 
@@ -92,7 +92,7 @@ int lfs_flash_erase(const struct lfs_config *c, lfs_block_t block){
     return 0;
 }
 
-int lfs_flash_sync(const struct lfs_config *c){
+static int lfs_flash_sync(const struct lfs_config *c){
 
     return 0;
 }
