@@ -3,9 +3,14 @@
 #include "platform.h"
 
 #define FLASH_TIMEOUT_MS 100U
+#define LFS_CACHE_SIZE 1U
+#define LFS_LOOKAHEAD_SIZE 256U
 
 extern mx25l25645g_t flash;
 
+uint8_t read_buffer[LFS_CACHE_SIZE];
+uint8_t prog_buffer[LFS_CACHE_SIZE];
+uint32_t lookahead_buffer[LFS_LOOKAHEAD_SIZE / 4];
 
 static int lfs_flash_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size){
     
@@ -104,13 +109,16 @@ const struct lfs_config config = {
     .erase = lfs_flash_erase,
     .sync = lfs_flash_sync,
 
+    .read_buffer = read_buffer,
+    .prog_buffer = prog_buffer, 
+    .lookahead_buffer = lookahead_buffer,
     .read_size = 1U,
     .prog_size = 1U,
     .block_size = 4096U,
     .block_count = 8192U,
     .block_cycles = -1,
-    .cache_size = 1U,
-    .lookahead_size = 256U,
+    .cache_size = LFS_CACHE_SIZE,
+    .lookahead_size = LFS_LOOKAHEAD_SIZE,
     .compact_thresh = -1,
     .name_max = 0,
     .file_max = 0,
