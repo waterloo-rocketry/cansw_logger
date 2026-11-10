@@ -3,7 +3,9 @@
 #include "platform.h"
 
 #define FLASH_TIMEOUT_MS 100U
-#define LFS_CACHE_SIZE 1U
+#define LFS_PROG_SIZE 256U /* size of a page on the mx25l2564g */
+#define LFS_READ_SIZE 1U
+#define LFS_CACHE_SIZE 256U
 #define LFS_LOOKAHEAD_SIZE 256U
 
 extern mx25l25645g_t flash;
@@ -107,16 +109,19 @@ const struct lfs_config config = {
     .erase = lfs_flash_erase,
     .sync = lfs_flash_sync,
 
+    .block_size = MX25L2564G_BLOCK_SIZE,
+    .block_count = MX25L2564G_BLOCK_COUNT,
+
+    .read_size = LFS_READ_SIZE,
+    .prog_size = LFS_PROG_SIZE,
+    .cache_size = LFS_CACHE_SIZE,
+    .lookahead_size = LFS_LOOKAHEAD_SIZE,
+
     .read_buffer = read_buffer,
     .prog_buffer = prog_buffer, 
     .lookahead_buffer = lookahead_buffer,
-    .read_size = 1U,
-    .prog_size = 1U,
-    .block_size = 4096U,
-    .block_count = 8192U,
+
     .block_cycles = -1,
-    .cache_size = LFS_CACHE_SIZE,
-    .lookahead_size = LFS_LOOKAHEAD_SIZE,
     .compact_thresh = -1,
     .name_max = 0,
     .file_max = 0,

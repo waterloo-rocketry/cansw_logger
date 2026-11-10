@@ -2,6 +2,10 @@
 #include "common.h"
 #include <stdbool.h>
 
+/* mx25l25645g flash properties */
+#define MX25L2564G_BLOCK_SIZE 4096U
+#define MX25L2564G_BLOCK_COUNT 8192U
+
 typedef struct {
     QSPI_HandleTypeDef *hqspi;
     GPIO_TypeDef *cs_port;
