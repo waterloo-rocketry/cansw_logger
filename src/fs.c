@@ -14,10 +14,10 @@ extern const struct lfs_config config;
 
 #define MAX_FILE_PER_DIR 1000
 
-static FATFS fatfs;
-static FIL logfile;
-lfs_t lfs_flash;
-lfs_file_t logfile_flash;
+static FATFS fatfs = {0};
+static FIL logfile = {0};
+lfs_t lfs_flash = {0};
+lfs_file_t logfile_flash = {0};
 
 static uint32_t index_counter = 0;
 static uint32_t page_counter = 0;
