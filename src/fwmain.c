@@ -6,10 +6,48 @@
 #include "log.h"
 #include "main.h"
 #include "platform.h"
+#include "mx25l25645g.h"
+#include "lfs.h"
 
 #define BOARD_HEARTBEAT_PERIOD 500
 
 extern FDCAN_HandleTypeDef hfdcan1;
+extern QSPI_HandleTypeDef hqspi;
+static lfs_t lfs;
+static lfs_file_t file;
+mx25l25645g_t flash;
+MDMA_HandleTypeDef mdma = {0};
+
+static void mdma_init(void){
+
+	__HAL_RCC_MDMA_CLK_ENABLE();
+	
+	mdma.Instance = MDMA_Channel0;
+	mdma.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+	mdma.Init.Request = MDMA_REQUEST_QUADSPI_FIFO_TH;
+
+	/* These are overridden by QSPI HAL during transmit/recieve */
+	mdma.Init.DestinationInc = MDMA_DEST_INC_DISABLE;
+	mdma.Init.SourceInc = MDMA_SRC_INC_BYTE;
+
+	mdma.Init.BufferTransferLength = 1U;
+	mdma.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
+	mdma.Init.Priority = MDMA_PRIORITY_HIGH;
+	mdma.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+	mdma.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+	mdma.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
+
+	HAL_MDMA_Init(&mdma);
+
+	__HAL_LINKDMA(&hqspi, hmdma, mdma);
+
+	HAL_NVIC_SetPriority(MDMA_IRQn, 5U, 0U);
+	HAL_NVIC_SetPriority(QUADSPI_IRQn, 5U, 0U);
+	HAL_NVIC_EnableIRQ(MDMA_IRQn);
+	HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
+
+}
+
 
 void can_callback_function(const can_msg_t *message) {
 	switch (get_message_type(message)) {
@@ -39,9 +77,11 @@ uint32_t last_board_status_msg = 0;
 bool green_led_on = true;
 
 void fwmain(void) {
-	stm32h7_can_init(&hfdcan1, can_callback_function);
 
-	if (fs_init() != W_SUCCESS) { // Filesystem Init Failed
+	stm32h7_can_init(&hfdcan1, can_callback_function);
+	mdma_init();
+	
+	if ((mx25l25645g_init(&flash, &hqspi, GPIOB, GPIO_PIN_10) != W_SUCCESS) || (fs_init() != W_SUCCESS)) { // Filesystem Init Failed
 		for (;;) {
 			can_msg_t msg;
 			uint32_t general_error_code = health_check();
@@ -53,9 +93,11 @@ void fwmain(void) {
 		}
 	}
 
+	// wipes and resets log buffer
 	log_init();
-
+	
 	for (;;) {
+
 		if (millis() - last_board_status_msg > BOARD_HEARTBEAT_PERIOD) {
 			last_board_status_msg = millis();
 
@@ -85,9 +127,12 @@ void fwmain(void) {
 				green_led_on = true;
 			}
 		}
-
+		
+		// if the active buffer is ready to write, write it to fs and then clear it, then increment the active buffer
 		log_heartbeat();
+		
 	}
+		
 }
 
 void w_assert_fail(const char *file, int line, const char *statement) {
