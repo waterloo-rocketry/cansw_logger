@@ -4,6 +4,7 @@
 #include "fatfs.h"
 #include "rocketlib.h"
 
+#include "lfs.h"
 #include "fs.h"
 #include "log.h"
 #include "main.h"
