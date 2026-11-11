@@ -1,9 +1,7 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include <common.h>
-
-#include "canlib.h"
+#include "rocketlib.h"
 
 #define PAGE_SIZE 4096
 #define NUM_BUFFERS 4
